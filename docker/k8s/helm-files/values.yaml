@@ -1,0 +1,18 @@
+fabricDir: /home/ubuntu
+
+blockchainConnector:
+  name: avalon-blockchain-connector
+
+shell:
+  name: avalon-shell
+
+lmdb:
+  name: avalon-lmdb
+  containerPort: 9090
+
+enclaveManager:
+  name: avalon-enclave-manager
+
+listener:
+  name: avalon-listener
+  containerPort: 1947

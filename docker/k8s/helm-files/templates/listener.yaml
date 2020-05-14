@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.listener.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.listener.name }}
+  template:
+    metadata:
+      name: {{ .Values.listener.name }}
+      labels:
+        app: {{ .Values.listener.name }}
+    spec:
+      containers:
+      - image: {{ .Values.listener.name }}-dev:latest
+        name: {{ .Values.listener.name }}
+        imagePullPolicy: Never
+        command: ["/bin/bash"]
+        args: ["-c", "avalon_listener --bind http://0.0.0.0:1947 --lmdb_url http://avalon-lmdb:9090"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.listener.name }}
+spec:
+  ports:
+  - port: 1947
+    targetPort: {{ .Values.listener.containerPort }}
+  selector:
+    app: {{ .Values.listener.name }}

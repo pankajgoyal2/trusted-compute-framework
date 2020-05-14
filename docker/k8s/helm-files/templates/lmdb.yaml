@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.lmdb.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.lmdb.name }}
+  template:
+    metadata:
+      name: {{ .Values.lmdb.name }}
+      labels:
+        app: {{ .Values.lmdb.name }}
+    spec:
+      containers:
+      - image: {{ .Values.lmdb.name }}-dev:latest
+        name: {{ .Values.lmdb.name }}
+        imagePullPolicy: Never
+        command: ["/bin/bash"]
+        args: ["-c", "kv_storage --bind http://0.0.0.0:9090"]
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - name: db
+          mountPath: /lmdb
+      volumes:
+      - name: db
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.lmdb.name }}
+spec:
+  ports:
+  - port: 9090
+    targetPort: {{ .Values.lmdb.containerPort }}
+  selector:
+    app: {{ .Values.lmdb.name }}

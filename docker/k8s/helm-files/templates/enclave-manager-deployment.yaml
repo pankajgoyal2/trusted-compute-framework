@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.enclaveManager.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.enclaveManager.name }}
+  template:
+    metadata:
+      name: {{ .Values.enclaveManager.name }}
+      labels:
+        app: {{ .Values.enclaveManager.name }}
+    spec:
+      containers:
+      - image: {{ .Values.enclaveManager.name }}-dev:latest
+        name: {{ .Values.enclaveManager.name }}
+        imagePullPolicy: Never
+        command: ["/bin/bash"]
+        args: ["-c", "enclave_manager --lmdb_url http://avalon-lmdb:9090"]
