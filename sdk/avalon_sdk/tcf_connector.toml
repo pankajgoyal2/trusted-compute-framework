@@ -39,12 +39,12 @@ work_order_contract_file = "sdk/avalon_sdk/connector/blockchains/ethereum/contra
 # Deployed contract address of direct registry contract address.
 direct_registry_contract_address = "0xD5A613945DE851C7c2f83fFDA4de0aE01CE980c0"
 # Deployed contract address of worker registry contract address.
-worker_registry_contract_address = "0x75a3Fd17E8c5CceAa9121251c359bFe4b9C343C8"
+worker_registry_contract_address = "0x785C11b9b4636B1afDc5dfB4b02dC9749b287705"
 # Deployed contract address of worker registry contract address.
-work_order_contract_address = "0xf873133fae1d1f80642c551a6edd5A14f37129c2"
+work_order_contract_address = "0xdF38be8C1A45A12c00ddE9CEB4F25CeC289FA733"
 
 # Ethereum account details
-eth_account = "0x7085d4d4c6efea785edfba5880bb62574e115626"
+eth_account = "0xa525fB2e3fEaCC5716B89119cB84faB2B3793BDc"
 # Ethereum account private key
 acc_pvt_key = "4F611197A6E82715F4D2446FE015D1667E9C40A351411F3A7300F71F285D01B4"
 
@@ -55,8 +55,8 @@ solc_version = "v0.5.15"
 # docs/dev-environments/ethereum/besu/docker-compose.yaml.
 # This could be replaced with a Ropsten(Infura as the IAAS) provider or a
 # Ganache client.
-provider = "http://rpc.node1.avalon.local:8555" # http://local-ganache:8545 for Ganache
-event_provider = "http://node1.avalon.local:8545" # http://local-ganache:8545 for Ganache
+provider = "http://local-ganache:8545"
+event_provider = "http://local-ganache:8545"
 # chain_id is 3 for ropsten test network
 # "1": Ethereum Mainnet
 # "2": Morden Testnet (deprecated)

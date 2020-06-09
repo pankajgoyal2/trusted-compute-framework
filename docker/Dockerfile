@@ -201,8 +201,8 @@ RUN echo "Building Avalon SDK\n" \
 FROM base_image as final_image
 
 RUN apt-get update \
- && apt-get install -y -q python3-pip git \
- && pip3 install json-rpc web3 py-solc-x nose2 \
+ && apt-get install -y -q python3-pip git python3-yaml vim \
+ && pip3 install json-rpc web3 py-solc-x nose2 pytest pytest-json-report \
  && echo "Install fabric python sdk\n" \
  && pip3 install virtualenv \
  && echo "fastapi==0.27.*" >>requirement.txt \
@@ -229,6 +229,8 @@ WORKDIR /project/avalon/
 
 COPY ./tools/run_tests.sh /project/avalon/tools/
 COPY ./tools/run_proxy_model_tests.sh /project/avalon/tools/
+COPY ./tools/run_fabric_proxy_model_tests.sh /project/avalon/tools/
+COPY ./tools/run_eth_proxy_model_tests.sh /project/avalon/tools/
 COPY ./docker/k8s/propose_requests.sh /project/avalon/docker/k8s/
 COPY ./config/tcs_config.toml /project/avalon/config/
 COPY ./tests /project/avalon/tests

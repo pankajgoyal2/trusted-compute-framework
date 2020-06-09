@@ -1,0 +1,131 @@
+// Copyright 2020 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------------
+
+pipeline {
+    agent {
+        node {
+            label 'nightly'
+        }
+    }
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        ISOLATION_ID = sh(returnStdout: true,
+                          script: 'printf $BUILD_TAG | sha256sum | cut -c1-64').trim()
+    }
+
+    stages {
+
+        stage ('Prepare Build Parameters') {
+            steps {
+                script {
+                    env.JK_RUNID = "Nightly_" + new Date().format("yyyy-MM-dd-HH-mm-ss") + "." + env.BUILD_NUMBER.toString()
+                    env.NIGHTLY_WORKSPACE_DIR = env.HOME + "/automation_nightly/" + env.JK_RUNID
+                    println "###################################################################################################################"
+                    println "#=================================================================================================================="
+                    println "# JK_RUNID: " + env.JK_RUNID
+                    println "# NIGHTLY_WORKSPACE_DIR: " + env.NIGHTLY_WORKSPACE_DIR
+                    println "#=================================================================================================================="
+                    println "###################################################################################################################"
+                }
+            }
+        }
+
+        stage('Checkout avalon/master, CI & Validation Repo') {
+            steps {
+                sh '''
+                if docker ps -a | grep -q 'avalon-shell'; then
+                    docker stop $(docker ps -a -q)
+                    docker rm $(docker ps -a -q)
+                fi
+                docker system prune -af
+                mkdir -p $NIGHTLY_WORKSPACE_DIR/dev_repo
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo
+                git clone https://github.com/hyperledger/avalon.git
+                cd avalon
+
+                mkdir -p $NIGHTLY_WORKSPACE_DIR/ci_repo
+                cd $NIGHTLY_WORKSPACE_DIR/ci_repo
+                git clone --single-branch --branch avalon-ci https://github.com/pankajgoyal2/trusted-compute-framework.git
+
+                mkdir -p $NIGHTLY_WORKSPACE_DIR/val_repo
+                cd $NIGHTLY_WORKSPACE_DIR/val_repo
+                git clone --single-branch --branch automation_framework_rework  https://github.com/jinengandhi-intel/avalon.git
+                cd avalon
+
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/verifytests.py $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                '''
+            }
+        }
+
+        stage('Build Avalon Worker Pool Direct Model Components') {
+            steps {
+                sh '''
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                mkdir logs
+                echo `pwd`
+                docker-compose -f ci/docker-compose-wp-direct-model-build.yaml build
+                '''
+            }
+        }
+
+        stage('Run Avalon Worker Pool Direct Model Tests') {
+            steps {
+                sh '''
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                echo `pwd`
+                INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -w 2>&1 | tee logs/genericclient_output.txt
+                python tests/verifytests.py -o logs/genericclient_output.txt
+                '''
+            }
+        }
+
+        stage('Create git archive') {
+            steps {
+                sh '''
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                REPO=$(git remote show -n origin | grep Fetch | awk -F'[/.]' '{print $6}')
+                git archive HEAD --format=zip -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.zip
+                git archive HEAD --format=tgz -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.tgz
+                '''
+            }
+        }
+
+    }
+
+    post {
+        success {
+            archiveArtifacts '*.tgz, *.zip'
+        }
+        aborted {
+            error "Aborted, exiting now"
+        }
+        failure {
+            error "Failed, exiting now"
+        }
+    }
+}
