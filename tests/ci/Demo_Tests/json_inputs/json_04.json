@@ -1,0 +1,9 @@
+{
+    "jsonrpc": "2.0",
+    "method": "WorkerLookUp",
+    "id": 4,
+    "params": {
+        "workerType": 13,
+        "applicationTypeId": "d9da17ef4a63c2b8f85791a62e17b58623bc7caff7e33d3fb26bd74ac2e87027"
+    }
+}

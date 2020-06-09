@@ -1,0 +1,8 @@
+{
+    "jsonrpc": "2.0",
+    "method": "WorkerRetrieve",
+    "id": 11,
+    "params": {
+        "workerId": "6acc25e3a982265407efdcd3db5894764bd31aa91a443cc91164af2693aa0205"
+    }
+}

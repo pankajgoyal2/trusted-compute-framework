@@ -1,0 +1,12 @@
+{
+  "json_01" : {"code": 0, "message": "Successfully Registered", "id": 1, "jsonrpc": "2.0"},
+  "json_02" : {"ids": ["6acc25e3a982265407efdcd3db5894764bd31aa91a443cc91164af2693aa0205"]},
+  "json_03" : {"ids": ["6acc25e3a982265407efdcd3db5894764bd31aa91a443cc91164af2693aa0205"]},
+  "json_04" : {"ids": ["6acc25e3a982265407efdcd3db5894764bd31aa91a443cc91164af2693aa0205"]},
+  "json_05" : {"ids": ["6acc25e3a982265407efdcd3db5894764bd31aa91a443cc91164af2693aa0205"]},
+  "json_06" : {
+    "workerType": 13,
+    "organizationId": "ccd3f227435cdeac99776e019b76ef5858b5f660dd0308fc34f0168d30ec672f",
+    "applicationTypeId": "d9da17ef4a63c2b8f85791a62e17b58623bc7caff7e33d3fb26bd74ac2e87027"
+  }
+}

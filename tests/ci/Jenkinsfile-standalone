@@ -1,0 +1,148 @@
+#!groovy
+
+// Copyright 2019 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------------
+
+pipeline {
+    agent {
+        node {
+            label 'standalone'
+        }
+    }
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        ISOLATION_ID = sh(returnStdout: true,
+                          script: 'printf $BUILD_TAG | sha256sum | cut -c1-64').trim()
+        COMPOSE_PROJECT_NAME = sh(returnStdout: true,
+                          script: 'printf $BUILD_TAG | sha256sum | cut -c1-64').trim()
+    }
+
+    stages {
+
+        stage ('Prepare Build Parameters') {
+            steps {
+                script {
+                    env.JK_RUNID = "Nightly_" + new Date().format("yyyy-MM-dd") + "." + env.BUILD_NUMBER.toString()
+                    env.NIGHTLY_WORKSPACE_DIR = env.HOME + "/automation_nightly/" + env.JK_RUNID
+                    println "###################################################################################################################"
+                    println "#=================================================================================================================="
+                    println "# JK_RUNID: " + env.JK_RUNID
+                    println "# NIGHTLY_WORKSPACE_DIR: " + env.NIGHTLY_WORKSPACE_DIR
+                    println "#=================================================================================================================="
+                    println "###################################################################################################################"
+                }
+            }
+        }
+
+        stage('Checkout Master & Validation Repo') {
+            steps {
+                sh '''
+                mkdir -p $NIGHTLY_WORKSPACE_DIR/dev_repo
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo
+                git clone https://github.com/hyperledger/avalon.git
+
+                mkdir -p $NIGHTLY_WORKSPACE_DIR/val_repo
+                cd $NIGHTLY_WORKSPACE_DIR/val_repo
+                git clone https://github.com/jinengandhi-intel/avalon.git
+
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                '''
+            }
+        }
+
+        stage('Install Pre-Requisites') {
+            steps {
+                sh '''
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+
+                echo "export SGX_MODE=$SGX_MODE" >> ~/.bashrc
+
+                export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                echo $TCF_HOME
+                echo "export TCF_HOME=$TCF_HOME" >> ~/.bashrc
+
+                sed -i 's/DEADBEEF00000000DEADBEEF00000000/A9FBB021C731DE8B63608FE3D1EBECBC/g' $TCF_HOME/config/singleton_enclave_config.toml
+                sed -i 's/112233445566778899aabbccddeeff00/91473723baff496a9398f8470b31e91f/g' $TCF_HOME/config/singleton_enclave_config.toml
+                sed -i 's/avalon-listener/localhost/g' $TCF_HOME/tests/automation_framework/globals.py
+
+                sudo apt-get update
+                sudo apt-get install -y cmake swig pkg-config python3-dev python \
+                     software-properties-common virtualenv curl xxd git unzip dh-autoreconf \
+                     ocaml ocamlbuild liblmdb-dev protobuf-compiler python3-pip python3-toml \
+                     python3-requests python3-colorlog python3-twisted
+                sudo apt-get install -y python3-venv
+                pip3 install --upgrade setuptools json-rpc py-solc-x web3 colorlog twisted wheel toml
+                python3 -m solcx.install v0.5.15
+                '''
+            }
+        }
+
+        stage('Build & Test Avalon Standalone') {
+            steps {
+                sh '''#!/bin/bash
+                echo "SGX_MODE is $SGX_MODE"
+                #if [ "$SGX_MODE" == "sgx" ]; then
+                #  openssl genrsa -3 -out $TCF_HOME/enclave.pem 3072;
+                #  export TCF_ENCLAVE_CODE_SIGN_PEM=$TCF_HOME/enclave.pem;
+                #fi
+
+                export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                export SGX_SDK=/opt/intel/sgxsdk
+                export PKG_CONFIG_PATH="$PWD/install/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
+                cd $TCF_HOME/tools/build
+                # Create virtual environment directory with name _dev
+                python3 -m venv _dev
+                source _dev/bin/activate
+                echo "PWD `pwd`"
+                pip3 install --upgrade setuptools json-rpc py-solc-x web3 colorlog twisted wheel toml zmq pytest pytest-json-report
+                make clean
+                make
+                cd $TCF_HOME/scripts
+                echo "PWD `pwd`"
+                ./tcs_startup.sh -s -y && cd ../tests/ && python3 Demo.py --input_dir ./json_requests/ --connect_uri "http://localhost:1947" work_orders/output.json && cd ../scripts/ && ./tcs_startup.sh -s -t
+                ./tcs_startup.sh -s -t
+                deactivate
+                '''
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo 'Cleaning up the machine'
+            sh '''
+            pip3 uninstall -y setuptools json-rpc py-solc-x web3 colorlog twisted wheel toml
+            sudo apt-get remove -y cmake swig pkg-config python3-dev python \
+                 software-properties-common virtualenv curl xxd unzip dh-autoreconf \
+                 ocaml ocamlbuild liblmdb-dev protobuf-compiler python3-pip python3-toml \
+                 python3-requests python3-colorlog python3-twisted
+
+            sudo apt-get remove -y python3-venv
+            '''
+        }
+        aborted {
+            error "Aborted, exiting now"
+        }
+        failure {
+            error "Failed, exiting now"
+        }
+    }
+}

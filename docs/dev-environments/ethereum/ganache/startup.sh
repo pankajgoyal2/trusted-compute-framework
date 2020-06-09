@@ -37,6 +37,7 @@ echo "========================================================="
 
 docker run -d -p 8545:8545 --network=ganache_local_net --hostname=local-ganache \
     --name=local-ganache trufflesuite/ganache-cli:v6.9.1 \
+--account="0x38dfdb0acb3e0beb096af5efe927cf2bb3bc73bc0ec1cbad9d5506cf3b16ef2d,100000000000000000000" \
     || error_exit "Failed to start Ganache container"
 echo "Done"
 
