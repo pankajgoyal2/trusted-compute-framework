@@ -53,6 +53,94 @@ try $generic_client_path/fabric_generic_client.py --blockchain fabric \
 
 yell "#------------------------------------------------------------------------------------------------"
 yell "#------------------------------------------------------------------------------------------------"
+yell "Start Generic client Tests  ................"
+yell "#------------------------------------------------------------------------------------------------"
+yell "#------------------------------------------------------------------------------------------------"
+
+yell "QCID_18393_Test Workorder success for echo-client workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "Hello" -o
+
+yell "QCID_18402_Test Workorder success for heart-disease-eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -o
+
+yell "QCID_18404_Test special character for heart disease eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: 25 10 1 67  102 125 1 95 * & ! @ # %" -o
+yell "Test Completed"
+
+yell "QCID_18396_Test alpha numeric characters for echo client workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "Hello12345" -o
+yell "Test Completed"
+
+yell "QCID_18397_Test workorder only digits for echo client workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "12345678" -o
+yell "Test Completed"
+
+yell "QCID_18395_Test workorder only spaces for echo client workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "     " -o
+yell "Test Completed"
+
+yell "QCID_18403_Test workorder only special character for heart disease eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: $ @ ! %  ^ & * # * & ! @ # %" -o
+yell "Test Completed"
+
+yell "QCID_18406_Test workorder by passing paragraph for echo client workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "JMeter is a performance test tool. So it runs in parallel using multi-threading. However you can also use just 1 thread group and set the thread count to one to run it in sequence" -o
+yell "Test Completed"
+
+yell "QCID_18394_Test workorder special character payload for echo client workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "#@!$%@#&*()$%#" -o
+yell "Test Completed"
+
+yell "QCID_18430_Test Workorder indata by passing negative value for heart-disease-eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 -1" -o
+yell "Test Completed"
+
+yell "QCID_20315_Test Workorder with empty indata for heart-disease-eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "heart-disease-eval" --in_data "" -o
+yell "Test Completed"
+
+yell "QCID_20318_Test Workorder with requester signature echo-client workload"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "echo-result" --in_data "RequesterSignatureEnabled1" -o --requester_signature
+yell "Test Completed"
+
+yell "QCID_20319_Test Workorder with requester signature for heart-disease-eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/fabric_generic_client.py -b fabric \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -o \
+    --requester_signature
+yell "Test Completed"
+
+yell "#------------------------------------------------------------------------------------------------"
+yell "#------------------------------------------------------------------------------------------------"
 yell "Start Automated Tests  ................"
 yell "#------------------------------------------------------------------------------------------------"
 yell "#------------------------------------------------------------------------------------------------"
