@@ -84,6 +84,8 @@ pipeline {
                 chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/ci/run_fabric_proxy_model_tests.sh
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/start_fabric.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/scripts
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/scripts/start_fabric.sh
                 '''
             }
         }
