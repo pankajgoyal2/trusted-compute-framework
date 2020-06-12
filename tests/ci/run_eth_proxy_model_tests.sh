@@ -61,7 +61,7 @@ yell "#-------------------------------------------------------------------------
 yell "QCID_18393_Test Workorder success for echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "Hello"
+    --workload_id "echo-result" --in_data "Hello" -o
 
 yell "QCID_18402_Test Workorder success for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
@@ -129,7 +129,7 @@ yell "Test Completed"
 yell "QCID_20318_Test Workorder with requester signature echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "Hello" -o --requester_signature
+    --workload_id "echo-result" --in_data "RequesterSignatureEnabled1" -o --requester_signature
 yell "Test Completed"
 
 yell "QCID_20319_Test Workorder with requester signature for heart-disease-eval workload"
@@ -150,11 +150,11 @@ yell "Test Completed"
 #yell "#------------------------------------------------------------------------------------------------"
 #yell "#------------------------------------------------------------------------------------------------"
 
-# cd ${TCF_HOME}/tests/automation_framework
-# mkdir /project/avalon/logs
-# echo `pwd`
-#pytest -m "sdk" --junitxml /project/avalon/logs/eth_besu_proxy_results.xml \
-#    2>&1 | tee /project/avalon/logs/eth_besu_proxy_logs.txt
+cd ${TCF_HOME}/tests/automation_framework
+mkdir /project/avalon/logs
+echo `pwd`
+pytest -m "sdk" --junitxml /project/avalon/logs/eth_besu_proxy_results.xml \
+    2>&1 | tee /project/avalon/logs/eth_besu_proxy_logs.txt
 
 yell "#------------------------------------------------------------------------------------------------"
 yell "#------------------------------------------------------------------------------------------------"
