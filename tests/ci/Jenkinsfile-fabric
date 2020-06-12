@@ -75,7 +75,7 @@ pipeline {
                 sed -i "s/proxy_mode = False/proxy_mode = True/g" tests/automation_framework/globals.py
                 sed -i "s/blockchain_type = ''/blockchain_type = 'fabric'/g" tests/automation_framework/globals.py
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-proxy-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-fabric-proxy-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
