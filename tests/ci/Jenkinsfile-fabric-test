@@ -1,4 +1,6 @@
-// Copyright 2020 Intel Corporation
+#!groovy
+
+// Copyright 2019 Intel Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +29,8 @@ pipeline {
     environment {
         ISOLATION_ID = sh(returnStdout: true,
                           script: 'printf $BUILD_TAG | sha256sum | cut -c1-64').trim()
+        COMPOSE_PROJECT_NAME = sh(returnStdout: true,
+                          script: 'printf $BUILD_TAG | sha256sum | cut -c1-64').trim()
     }
 
     stages {
@@ -46,19 +50,18 @@ pipeline {
             }
         }
 
-        stage('Checkout avalon/master, CI & Validation Repo') {
+        stage('Checkout Avalon/master, CI & Validation Repo') {
             steps {
                 sh '''
+
                 if docker ps -a | grep -q 'avalon-shell'; then
                     docker stop $(docker ps -a -q)
                     docker rm $(docker ps -a -q)
-                    docker network rm ganache_local_net
                 fi
                 docker system prune -af
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/dev_repo
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo
                 git clone https://github.com/hyperledger/avalon.git
-                cd avalon
 
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/ci_repo
                 cd $NIGHTLY_WORKSPACE_DIR/ci_repo
@@ -70,49 +73,51 @@ pipeline {
                 cd avalon
 
                 sed -i "s/proxy_mode = False/proxy_mode = True/g" tests/automation_framework/globals.py
-                sed -i "s/blockchain_type = ''/blockchain_type = 'ethereum'/g" tests/automation_framework/globals.py
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                sed -i "s/blockchain_type = ''/blockchain_type = 'fabric'/g" tests/automation_framework/globals.py
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/eth-config-update.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/eth-config-update.sh
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
-                ./eth-config-update.sh ganache $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/sdk/avalon_sdk/tcf_connector.toml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docs/dev-environments/ethereum/ganache
-                
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docs/dev-environments/ethereum/ganache/startup.sh
-
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-ganache-proxy-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-ganache-proxy-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_eth_proxy_model_tests.sh
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-proxy-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-fabric-proxy-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_eth_proxy_model_tests.sh
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_fabric_proxy_model_tests.sh
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/ci/run_fabric_proxy_model_tests.sh
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/start_fabric.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/scripts
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/scripts/start_fabric.sh
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
                 '''
             }
         }
 
-        stage('Start Ethereum Ganache Network') {
+        stage('Build avalon components') {
             steps {
-                sh '''
-                export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
-                echo `pwd`
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docs/dev-environments/ethereum/ganache
-                ./startup.sh
-                '''
-            }
-        }
-
-        stage('Build Avalon Proxy Model Components') {
-            steps {
-                sh '''
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
-                mkdir logs
-                echo `pwd`
-                docker-compose -f ci/docker-compose-ganache-proxy-model-build.yaml build
-                '''
+                parallel (
+                    "Build Avalon Proxy Model Components": {
+                        script {
+                            sh '''
+                            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                            mkdir logs
+                            echo `pwd`
+                            docker-compose -f ci/docker-compose-fabric-proxy-model-build.yaml build
+                            '''
+                        }
+                    },
+                    "Start fabric network": {
+                        script {
+                            sh '''
+                            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                            export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                            echo `pwd`
+                            ./scripts/start_fabric.sh -w ./ -u
+                            '''
+                        }
+                    }
+                )
             }
         }
 
@@ -121,8 +126,19 @@ pipeline {
                 sh '''
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
                 echo `pwd`
-                INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -g 2>&1 | tee logs/genericclient_output.txt
+                INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -f 2>&1 | tee logs/genericclient_output.txt
                 python tests/Demo_Tests/verifytests.py -o logs/genericclient_output.txt
+                '''
+            }
+        }
+
+        stage('Create git archive') {
+            steps {
+                sh '''
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                REPO=$(git remote show -n origin | grep Fetch | awk -F'[/.]' '{print $6}')
+                git archive HEAD --format=zip -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.zip
+                git archive HEAD --format=tgz -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.tgz
                 '''
             }
         }
@@ -131,12 +147,14 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up Ethereum network'
+            echo 'Cleaning up fabric network'
             sh '''
-            export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
-            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docs/dev-environments/ethereum/ganache
-            ./cleanup.sh
+            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+            ./scripts/start_fabric.sh -w ./ -c
             '''
+        }
+        success {
+            archiveArtifacts '*.tgz, *.zip'
         }
         aborted {
             error "Aborted, exiting now"
