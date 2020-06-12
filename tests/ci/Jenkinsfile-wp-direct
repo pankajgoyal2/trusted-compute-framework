@@ -70,6 +70,7 @@ pipeline {
 
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
@@ -99,7 +100,7 @@ pipeline {
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
                 echo `pwd`
                 INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -w 2>&1 | tee logs/genericclient_output.txt
-                python tests/verifytests.py -o logs/genericclient_output.txt
+                python tests/Demo_Tests/verifytests.py -o logs/genericclient_output.txt
                 '''
             }
         }
