@@ -98,7 +98,7 @@ pipeline {
                 sh '''
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
                 echo `pwd`
-                INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -d 2>&1 | tee logs/genericclient_output.txt
+                INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -s 2>&1 | tee logs/genericclient_output.txt
                 python tests/Demo_Tests/verifytests.py -o logs/genericclient_output.txt
                 '''
             }
