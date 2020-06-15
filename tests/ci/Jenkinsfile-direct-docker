@@ -74,7 +74,8 @@ pipeline {
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-direct-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-direct-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                # NEED TO ADD: cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
