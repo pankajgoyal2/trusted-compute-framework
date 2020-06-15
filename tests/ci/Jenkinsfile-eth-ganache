@@ -16,7 +16,7 @@
 pipeline {
     agent {
         node {
-            label 'nightly'
+            label nodelabel
         }
     }
 
@@ -111,7 +111,23 @@ pipeline {
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
                 mkdir logs
                 echo `pwd`
-                docker-compose -f ci/docker-compose-ganache-proxy-model-build.yaml build
+                if [ "$WORKER_MODE" = "SINGLETON" ]; then
+                    if [ "$SGX_MODE" = "SIM" ]; then
+                        docker-compose -f ci/docker-compose-ganache-proxy-model-build.yaml build
+                    else
+                        ./scripts/sgx-hw.sh config/singleton_enclave_config.toml
+                        docker-compose -f ci/docker-compose-ganache-proxy-model-build.yaml -f ci/docker-compose-ganache-proxy-model-sgx-build.yaml build
+                    fi
+                else
+                    if [ "$SGX_MODE" = "SIM" ]; then
+                        docker-compose -f ci/docker-compose-wp-ganache-proxy-model-build.yaml build
+                    else
+                        ./scripts/sgx-hw.sh config/kme_config.toml
+                        ./scripts/sgx-hw.sh config/wpe_config.toml
+                        docker-compose -f ci/docker-compose-wp-ganache-proxy-model-build.yaml -f ci/docker-compose-ganache-proxy-model-sgx-build.yaml build
+                    fi
+                fi
+
                 '''
             }
         }
@@ -121,7 +137,19 @@ pipeline {
                 sh '''
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
                 echo `pwd`
-                INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -g 2>&1 | tee logs/genericclient_output.txt
+                if [ "$WORKER_MODE" = "SINGLETON" ]; then
+                    if [ "$SGX_MODE" = "SIM" ]; then
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -g 2>&1 | tee logs/genericclient_output.txt
+                    else
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -g 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Ganache SGX mode
+                    fi
+                else
+                    if [ "$SGX_MODE" = "SIM" ]; then
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -g 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Ganache WP mode
+                    else
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -g 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Ganache WP SGX mode
+                    fi
+                fi
                 python tests/Demo_Tests/verifytests.py -o logs/genericclient_output.txt
                 '''
             }
