@@ -35,6 +35,12 @@ WP_DIRECT_MODEL_SGX_TESTS=0
 BESU_PROXY_MODEL_SGX_TESTS=0
 GANACHE_PROXY_MODEL_SGX_TESTS=0
 FABRIC_PROXY_MODEL_SGX_TESTS=0
+FABRIC_PROXY_MODEL_WP_TESTS=0
+FABRIC_PROXY_MODEL_WP_SGX_TESTS=0
+BESU_PROXY_MODEL_WP_TESTS=0
+BESU_PROXY_MODEL_WP_SGX_TESTS=0
+GANACHE_PROXY_MODEL_WP_TESTS=0
+GANACHE_PROXY_MODEL_WP_SGX_TESTS=0
 
 main() {
 
@@ -58,11 +64,23 @@ main() {
         run_docker_test ./ci/avalon-ganache-proxy-model-sgx-tests.yaml
     elif [ "$FABRIC_PROXY_MODEL_SGX_TESTS" == "1" ]; then
         run_docker_test ./ci/avalon-fabric-proxy-model-sgx-tests.yaml
+    elif [ "$FABRIC_PROXY_MODEL_WP_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-fabric-proxy-model-wp-tests.yaml
+    elif [ "$FABRIC_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-fabric-proxy-model-wp-sgx-tests.yaml
+    elif [ "$BESU_PROXY_MODEL_WP_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-besu-proxy-model-wp-tests.yaml
+    elif [ "$BESU_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-besu-proxy-model-wp-sgx-tests.yaml
+    elif [ "$GANACHE_PROXY_MODEL_WP_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-ganache-proxy-model-wp-tests.yaml
+    elif [ "$GANACHE_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-ganache-proxy-model-wp-sgx-tests.yaml
     fi
 
 }
 
-while getopts "dbfgwstuvx" opt; do
+while getopts "dbfgwstuvxyzijkl" opt; do
     case $opt in
         d)
             DIRECT_MODEL_TESTS=1
@@ -94,6 +112,24 @@ while getopts "dbfgwstuvx" opt; do
 	x)
             FABRIC_PROXY_MODEL_SGX_TESTS=1
 	    ;;
+        y)
+            FABRIC_PROXY_MODEL_WP_TESTS=1
+            ;;
+        z)
+            FABRIC_PROXY_MODEL_WP_SGX_TESTS=1
+            ;;
+        i)
+            BESU_PROXY_MODEL_WP_TESTS=1
+            ;;
+        j)
+            BESU_PROXY_MODEL_WP_SGX_TESTS=1
+            ;;
+        k)
+            GANACHE_PROXY_MODEL_WP_TESTS=1
+            ;;
+        l)
+            GANACHE_PROXY_MODEL_WP_SGX_TESTS=1
+            ;;
         h)
             echo "Usage: run_tests script to trigger tests for direct/proxy model"
 	    echo "    run_tests -d       To run (Singleton) direct model tests."
@@ -106,6 +142,12 @@ while getopts "dbfgwstuvx" opt; do
 	    echo "    run_tests -u       To run (Singleton) besu ethereum proxy model SGX tests."
 	    echo "    run_tests -v       To run (Singleton) ganache ethereum proxy model SGX tests."
 	    echo "    run_tests -x       To run (Singleton) fabric proxy model SGX tests."
+            echo "    run_tests -y       To run (Worker Pool) fabric proxy model tests."
+            echo "    run_tests -z       To run (Worker Pool) fabric proxy model SGX tests."
+            echo "    run_tests -i       To run (Worker Pool) besu ethereum proxy model tests."
+            echo "    run_tests -j       To run (Worker Pool) besu ethereum proxy model SGX tests."
+            echo "    run_tests -k       To run (Worker Pool) ganache ethereum proxy model tests."
+            echo "    run_tests -l       To run (Worker Pool) ganache ethereum proxy model SGX tests."
 	    exit 0
             ;;
         \?)
