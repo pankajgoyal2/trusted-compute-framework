@@ -74,8 +74,9 @@ pipeline {
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-direct-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-direct-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                # NEED TO ADD: cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-wp-direct-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-sgx-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
@@ -85,7 +86,7 @@ pipeline {
             }
         }
 
-        stage('Build Avalon Singleton Direct Model Components') {
+        stage('Build Avalon Direct Model Components') {
             steps {
                 sh '''
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
@@ -104,14 +105,14 @@ pipeline {
                     else
                         ./scripts/sgx-hw.sh config/kme_config.toml
                         ./scripts/sgx-hw.sh config/wpe_config.toml
-                        docker-compose -f ci/docker-compose-wp-direct-model-build.yaml -f ci/docker-compose-direct-model-sgx-build.yaml build
+                        docker-compose -f ci/docker-compose-wp-direct-model-build.yaml -f ci/docker-compose-wp-direct-model-sgx-build.yaml build
                     fi
                 fi
                 '''
             }
         }
 
-        stage('Run Avalon Singleton Direct Model Tests') {
+        stage('Run Avalon Direct Model Tests') {
             steps {
                 sh '''
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
