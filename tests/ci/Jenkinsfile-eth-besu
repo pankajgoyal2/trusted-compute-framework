@@ -82,6 +82,7 @@ pipeline {
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-besu-proxy-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-besu-proxy-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-besu-proxy-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
                 chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_eth_proxy_model_tests.sh
@@ -113,7 +114,7 @@ pipeline {
                         docker-compose -f ci/docker-compose-besu-proxy-model-build.yaml build
                     else
                         ./scripts/sgx-hw.sh config/singleton_enclave_config.toml
-                        docker-compose -f ci/docker-compose-besu-proxy-model-build.yaml -f ci/docker-compose-besu-proxy-model-sgx-build.yaml build
+                        docker-compose -f ci/docker-compose-besu-proxy-model-build.yaml -f ci/docker-compose-direct-model-sgx-build.yaml build
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
@@ -138,7 +139,7 @@ pipeline {
                     if [ "$SGX_MODE" = "SIM" ]; then
                         INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -b 2>&1 | tee logs/genericclient_output.txt
                     else
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -b 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Besu SGX mode
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -u 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Besu SGX mode
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
