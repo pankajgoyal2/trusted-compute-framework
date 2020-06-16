@@ -15,7 +15,7 @@
 version: '3.5'
 
 services:
-  avalon-ganache-proxy-model-sgx-tests:
+  avalon-ganache-proxy-model-wp-tests:
     image: avalon-shell:${ISOLATION_ID}
     working_dir: "/project/avalon/"
     volumes:
@@ -25,21 +25,17 @@ services:
     depends_on:
       - avalon-enclave-manager
       - avalon-listener
+      - avalon-blockchain-connector
 
-  avalon-enclave-manager:
-    image: avalon-sgx-enclave-manager:${ISOLATION_ID}
+  avalon-kme:
+    image: avalon-enclave-manager-kme:${ISOLATION_ID}
     environment:
       - http_proxy
       - https_proxy
       - no_proxy
     expose:
-      # ZMQ socket port.
+      - 1948
       - 5555
-    volumes:
-      # Map aesm service on host to docker, required only in HW mode.
-      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
-    devices:
-      - "/dev/isgx:/dev/isgx"
     command: |
       bash -c "
         enclave_manager --lmdb_url http://avalon-lmdb:9090
@@ -47,6 +43,25 @@ services:
       "
     depends_on:
       - avalon-lmdb
+      - avalon-listener
+
+  avalon-enclave-manager:
+    image: avalon-enclave-manager-wpe:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 5555
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme:1948
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+      - avalon-kme
 
   avalon-lmdb:
     image: avalon-lmdb:${ISOLATION_ID}
@@ -85,13 +100,13 @@ services:
       - http_proxy
       - https_proxy
       - no_proxy
+    volumes:
+      - ../:/project/avalon
     command: |
       bash -c "
         avalon_blockchain_connector -b ethereum -u http://avalon-listener:1947
         tail -f /dev/null
-      "
-    volumes:
-      - ../:/project/avalon
+        "
     depends_on:
       - avalon-listener
       - avalon-enclave-manager

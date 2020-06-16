@@ -21,7 +21,7 @@ services:
     volumes:
       - ../logs:/project/avalon/logs
     entrypoint: "bash -c \"\
-        ./tools/run_tests.sh -l avalon-listener \""
+        ./tools/run_eth_proxy_model_tests.sh \""
     depends_on:
       - avalon-enclave-manager
       - avalon-listener

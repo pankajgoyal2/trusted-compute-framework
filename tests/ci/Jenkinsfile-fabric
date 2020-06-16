@@ -78,8 +78,12 @@ pipeline {
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-proxy-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-proxy-model-wp-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-sgx-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-fabric-proxy-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-fabric-proxy-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-fabric-proxy-model-wp-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-fabric-proxy-model-wp-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
                 cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
                 chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_fabric_proxy_model_tests.sh
@@ -111,11 +115,11 @@ pipeline {
                                 fi
                             else
                                 if [ "$SGX_MODE" = "SIM" ]; then
-                                    docker-compose -f ci/docker-compose-wp-fabric-proxy-model-build.yaml build
+                                    docker-compose -f ci/docker-compose-fabric-proxy-model-wp-build.yaml build
                                 else
                                     ./scripts/sgx-hw.sh config/kme_config.toml
                                     ./scripts/sgx-hw.sh config/wpe_config.toml
-                                    docker-compose -f ci/docker-compose-wp-fabric-proxy-model-build.yaml -f ci/docker-compose-fabric-proxy-model-sgx-build.yaml build
+                                    docker-compose -f ci/docker-compose-fabric-proxy-model-wp-build.yaml -f ci/docker-compose-wp-direct-model-sgx-build.yaml build
                                 fi
                             fi
 
@@ -149,9 +153,9 @@ pipeline {
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -f 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP mode
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -y 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP mode
                     else
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -f 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP SGX mode
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -z 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP SGX mode
                     fi
                 fi
                 python tests/Demo_Tests/verifytests.py -o logs/genericclient_output.txt
