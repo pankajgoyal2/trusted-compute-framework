@@ -62,12 +62,14 @@ yell "QCID_18393_Test Workorder success for echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "echo-result" --in_data "Hello" -o
+yell "Test Completed"
 
 yell "QCID_18402_Test Workorder success for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
     --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -o
+yell "Test Completed"
 
 yell "QCID_18404_Test special character for heart disease eval workload"
 yell "#------------------------------------------------------------------------------------------------"
