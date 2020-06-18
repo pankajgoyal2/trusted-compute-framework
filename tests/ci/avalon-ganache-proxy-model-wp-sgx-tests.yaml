@@ -114,7 +114,7 @@ services:
       - ../:/project/avalon
     command: |
       bash -c "
-        avalon_blockchain_connector -b ehtereum -u http://avalon-listener:1947
+        avalon_blockchain_connector -b ethereum -u http://avalon-listener:1947
         tail -f /dev/null
         "
     depends_on:
