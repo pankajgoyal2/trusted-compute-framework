@@ -155,7 +155,7 @@ yell "Test Completed"
 cd ${TCF_HOME}/tests/automation_framework
 mkdir /project/avalon/logs
 echo `pwd`
-pytest -m "sdk" --junitxml /project/avalon/logs/eth_besu_proxy_results.xml \
+pytest -m "positive" --junitxml /project/avalon/logs/eth_besu_proxy_results.xml \
     2>&1 | tee /project/avalon/logs/eth_besu_proxy_logs.txt
 
 yell "#------------------------------------------------------------------------------------------------"
