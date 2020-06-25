@@ -15,7 +15,7 @@
 version: '3.5'
 
 services:
-  avalon-wp-direct-model-tests:
+  avalon-multiple-wp-direct-model-tests:
     image: avalon-shell:${ISOLATION_ID}
     working_dir: "/project/avalon/"
     volumes:
