@@ -72,11 +72,11 @@ services:
       - https_proxy
       - no_proxy
     expose:
-      - 1949
+      - 1948
       - 5555
     command: |
       bash -c "
-        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme-2:1949 --worker_id worker_pool2
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme-2:1948 --worker_id worker_pool2
         tail -f /dev/null
       "
     depends_on:
@@ -94,7 +94,7 @@ services:
       - 5555
     command: |
       bash -c "
-        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1949 --worker_id worker_pool2
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1948 --worker_id worker_pool2
         tail -f /dev/null
       "
     depends_on:
@@ -113,7 +113,7 @@ services:
       - 5555
     command: |
       bash -c "
-        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1949 --worker_id worker_pool2
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1948 --worker_id worker_pool2
         tail -f /dev/null
       "
     depends_on:

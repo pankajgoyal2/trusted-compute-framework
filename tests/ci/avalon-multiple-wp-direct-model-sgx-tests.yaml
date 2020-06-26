@@ -15,7 +15,7 @@
 version: '3.5'
 
 services:
-  avalon-wp-direct-model-sgx-tests:
+  avalon-multiple-wp-direct-model-sgx-tests:
     image: avalon-shell:${ISOLATION_ID}
     working_dir: "/project/avalon/"
     volumes:
@@ -27,6 +27,7 @@ services:
       - avalon-listener
 
   avalon-kme:
+    container_name: avalon-kme
     image: avalon-sgx-enclave-manager-kme:${ISOLATION_ID}
     environment:
       - http_proxy
@@ -42,7 +43,7 @@ services:
       - "/dev/isgx:/dev/isgx"
     command: |
       bash -c "
-        enclave_manager --lmdb_url http://avalon-lmdb:9090
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme:1948
         tail -f /dev/null
       "
     depends_on:
@@ -50,6 +51,7 @@ services:
       - avalon-listener
 
   avalon-enclave-manager:
+    container_name: avalon-wpe
     image: avalon-sgx-enclave-manager-wpe:${ISOLATION_ID}
     environment:
       - http_proxy
@@ -71,6 +73,78 @@ services:
       - avalon-lmdb
       - avalon-listener
       - avalon-kme
+
+  avalon-kme-2:
+    container_name: avalon-kme-2
+    image: avalon-sgx-enclave-manager-kme:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 1948
+      - 5555
+    volumes:
+      # Map aesm service on host to docker, required only in HW mode.
+      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+    devices:
+      - "/dev/isgx:/dev/isgx"
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme-2:1948 --worker_id worker_pool2
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+
+  avalon-enclave-manager-2:
+    container_name: avalon-wpe-2
+    image: avalon-sgx-enclave-manager-wpe:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 5555
+    volumes:
+      # Map aesm service on host to docker, required only in HW mode.
+      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+    devices:
+      - "/dev/isgx:/dev/isgx"
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1948 --worker_id worker_pool2
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+      - avalon-kme-2
+
+  avalon-enclave-manager-3:
+    container_name: avalon-wpe-3
+    image: avalon-sgx-enclave-manager-wpe:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 5555
+    volumes:
+      # Map aesm service on host to docker, required only in HW mode.
+      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+    devices:
+      - "/dev/isgx:/dev/isgx"
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1948 --worker_id worker_pool2
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+      - avalon-kme-2
 
   avalon-lmdb:
     image: avalon-lmdb:${ISOLATION_ID}
