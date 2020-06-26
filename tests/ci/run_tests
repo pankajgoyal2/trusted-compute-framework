@@ -30,8 +30,10 @@ BESU_PROXY_MODEL_TESTS=0
 GANACHE_PROXY_MODEL_TESTS=0
 FABRIC_PROXY_MODEL_TESTS=0
 WP_DIRECT_MODEL_TESTS=0
+MULTIPLE_WP_DIRECT_MODEL_TESTS=0
 DIRECT_MODEL_SGX_TESTS=0
 WP_DIRECT_MODEL_SGX_TESTS=0
+MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS=0
 BESU_PROXY_MODEL_SGX_TESTS=0
 GANACHE_PROXY_MODEL_SGX_TESTS=0
 FABRIC_PROXY_MODEL_SGX_TESTS=0
@@ -76,11 +78,15 @@ main() {
         run_docker_test ./ci/avalon-ganache-proxy-model-wp-tests.yaml
     elif [ "$GANACHE_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
         run_docker_test ./ci/avalon-ganache-proxy-model-wp-sgx-tests.yaml
+	elif [ "$MULTIPLE_WP_DIRECT_MODEL_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-multiple-wp-direct-model-tests.yaml
+	elif [ "$MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS" == "1" ]; then
+        run_docker_test ./ci/avalon-multiple-wp-direct-model-sgx-tests.yaml
     fi
 
 }
 
-while getopts "dbfgwstuvxyzijkl" opt; do
+while getopts "dbfgwstuvxyzijklac" opt; do
     case $opt in
         d)
             DIRECT_MODEL_TESTS=1
@@ -130,6 +136,12 @@ while getopts "dbfgwstuvxyzijkl" opt; do
         l)
             GANACHE_PROXY_MODEL_WP_SGX_TESTS=1
             ;;
+		a)
+			MULTIPLE_WP_DIRECT_MODEL_TESTS=1
+			;;
+		c)
+			MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS=1
+			;;
         h)
             echo "Usage: run_tests script to trigger tests for direct/proxy model"
 	    echo "    run_tests -d       To run (Singleton) direct model tests."
@@ -148,6 +160,8 @@ while getopts "dbfgwstuvxyzijkl" opt; do
             echo "    run_tests -j       To run (Worker Pool) besu ethereum proxy model SGX tests."
             echo "    run_tests -k       To run (Worker Pool) ganache ethereum proxy model tests."
             echo "    run_tests -l       To run (Worker Pool) ganache ethereum proxy model SGX tests."
+            echo "    run_tests -a       To run (Multiple Worker Pool) direct model tests."
+            echo "    run_tests -c       To run (Multiple Worker Pool) direct model SGX tests."
 	    exit 0
             ;;
         \?)

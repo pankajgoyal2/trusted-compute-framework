@@ -15,7 +15,7 @@
 version: '3.5'
 
 services:
-  avalon-wp-direct-model-tests:
+  avalon-multiple-wp-direct-model-tests:
     image: avalon-shell:${ISOLATION_ID}
     working_dir: "/project/avalon/"
     volumes:
@@ -27,6 +27,7 @@ services:
       - avalon-listener
 
   avalon-kme:
+    container_name: avalon-kme
     image: avalon-enclave-manager-kme:${ISOLATION_ID}
     environment:
       - http_proxy
@@ -45,6 +46,7 @@ services:
       - avalon-listener
 
   avalon-enclave-manager:
+    container_name: avalon-wpe
     image: avalon-enclave-manager-wpe:${ISOLATION_ID}
     environment:
       - http_proxy
@@ -61,6 +63,63 @@ services:
       - avalon-lmdb
       - avalon-listener
       - avalon-kme
+
+  avalon-kme-2:
+    container_name: avalon-kme-2
+    image: avalon-enclave-manager-kme:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 1948
+      - 5555
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme-2:1948 --worker_id worker_pool2
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+
+  avalon-enclave-manager-2:
+    container_name: avalon-wpe-2
+    image: avalon-enclave-manager-wpe:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 5555
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1948 --worker_id worker_pool2
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+      - avalon-kme-2
+
+  avalon-enclave-manager-3:
+    container_name: avalon-wpe-3
+    image: avalon-enclave-manager-wpe:${ISOLATION_ID}
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    expose:
+      - 5555
+    command: |
+      bash -c "
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme-2:1948 --worker_id worker_pool2
+        tail -f /dev/null
+      "
+    depends_on:
+      - avalon-lmdb
+      - avalon-listener
+      - avalon-kme-2
 
   avalon-lmdb:
     image: avalon-lmdb:${ISOLATION_ID}
