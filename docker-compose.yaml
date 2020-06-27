@@ -23,9 +23,6 @@ services:
       dockerfile: ./docker/Dockerfile
       args:
         - DISPLAY=${DISPLAY:-}
-        - XAUTHORITY=~/.Xauthority
-        - http_proxy
-        - https_proxy
         - no_proxy
     environment:
       - DISPLAY
