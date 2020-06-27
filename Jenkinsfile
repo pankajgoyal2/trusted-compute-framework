@@ -120,11 +120,14 @@ pipeline {
         //}
         success {
             archiveArtifacts '*.tgz, *.zip'
+            githubNotify context: 'SGX/SIM mode',  status: 'SUCCESS'
         }
         aborted {
+            githubNotify context: 'SGX/SIM mode',  status: 'FAILED'
             error "Aborted, exiting now"
         }
         failure {
+            githubNotify context: 'SGX/SIM mode',  status: 'FAILED'
             error "Failed, exiting now"
         }
     }
