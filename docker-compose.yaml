@@ -24,18 +24,8 @@ services:
       args:
         - DISPLAY=${DISPLAY:-}
         - XAUTHORITY=~/.Xauthority
-        - http_proxy
-        - https_proxy
-        - no_proxy
     environment:
       - DISPLAY
-      - http_proxy
-      - https_proxy
-      - no_proxy
-    volumes:
-      # Below volume mappings are required for DISPLAY settings by heart disease GUI client
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ~/.Xauthority:/root/.Xauthority
     command: |
       bash -c "tail -f /dev/null"
     stop_signal: SIGKILL
@@ -75,10 +65,6 @@ services:
     build:
       context: .
       dockerfile: ./shared_kv_storage/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
     environment:
       - http_proxy
       - https_proxy
@@ -99,10 +85,6 @@ services:
     build:
       context: .
       dockerfile: ./listener/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
     environment:
       - http_proxy
       - https_proxy
