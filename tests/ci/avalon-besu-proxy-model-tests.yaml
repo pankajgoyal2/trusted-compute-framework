@@ -71,15 +71,16 @@ services:
     depends_on:
       - avalon-lmdb
 
-  avalon-blockchain-connector:
-    image: avalon-blockchain-connector:${ISOLATION_ID}
+  avalon-ethereum-connector:
+    container_name: avalon-ethereum-connector
+    image: avalon-ethereum-connector:${ISOLATION_ID}
     environment:
       - http_proxy
       - https_proxy
       - no_proxy
     command: |
       bash -c "
-        avalon_blockchain_connector -b ethereum -u http://avalon-listener:1947
+        avalon_ethereum_connector -u http://avalon-listener:1947
         tail -f /dev/null
       "
     volumes:

@@ -78,7 +78,7 @@ services:
     image: avalon-blockchain-connector:${ISOLATION_ID}
     build:
       context: ..
-      dockerfile: ./blockchain_connector/Dockerfile
+      dockerfile: ./blockchain_connector/docker/Dockerfile-ethereum
       args:
         - http_proxy
         - https_proxy
