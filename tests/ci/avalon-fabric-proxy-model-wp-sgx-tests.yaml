@@ -14,6 +14,9 @@
 
 version: '3.5'
 
+volumes:
+  pool-1:
+
 services:
   avalon-fabric-proxy-model-wp-sgx-tests:
     image: avalon-shell:${ISOLATION_ID}
@@ -21,14 +24,13 @@ services:
     volumes:
       - ../vars/keyfiles:/keyfiles
       - ../vars/profiles/mychannel_network_for_pysdk.json:/project/avalon/sdk/avalon_sdk/connector/blockchains/fabric/network.json
-      - ../vars/blockmark:/project/avalon/examples/apps/generic_client/blockmark
       - ../logs:/project/avalon/logs
     entrypoint: "bash -c \"\
         ./tools/run_fabric_proxy_model_tests.sh \""
     depends_on:
       - avalon-enclave-manager
       - avalon-listener
-      - avalon-blockchain-connector
+      - avalon-fabric-connector
 
   avalon-kme:
     image: avalon-sgx-enclave-manager-kme:${ISOLATION_ID}
@@ -38,15 +40,23 @@ services:
       - no_proxy
     expose:
       - 1948
-      - 5555
     volumes:
       # Map aesm service on host to docker, required only in HW mode.
       - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+      - pool-1:/shared-pool-1
     devices:
       - "/dev/isgx:/dev/isgx"
     command: |
       bash -c "
-        enclave_manager --lmdb_url http://avalon-lmdb:9090
+        while true;
+          do
+            if [ -e /shared-pool-1/wpe_mr_enclave.txt ];
+              then mv /shared-pool-1/wpe_mr_enclave.txt /project/avalon/wpe_mr_enclave.txt;
+              break;
+            fi;
+            sleep 1;
+        done;
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme:1948
         tail -f /dev/null
       "
     depends_on:
@@ -64,10 +74,12 @@ services:
     volumes:
       # Map aesm service on host to docker, required only in HW mode.
       - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+      - pool-1:/shared-pool-1
     devices:
       - "/dev/isgx:/dev/isgx"
     command: |
       bash -c "
+        mv /project/avalon/wpe_mr_enclave.txt /shared-pool-1
         enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme:1948
         tail -f /dev/null
       "
@@ -107,15 +119,16 @@ services:
     depends_on:
       - avalon-lmdb
 
-  avalon-blockchain-connector:
-    image: avalon-blockchain-connector:${ISOLATION_ID}
+  avalon-fabric-connector:
+    container_name: avalon-fabric-connector
+    image: avalon-fabric-connector:${ISOLATION_ID}
     environment:
       - http_proxy
       - https_proxy
       - no_proxy
     command: |
       bash -c "
-        avalon_blockchain_connector -b fabric -u http://avalon-listener:1947
+        avalon_fabric_connector -u http://avalon-listener:1947
         tail -f /dev/null
         "
     volumes:
@@ -123,7 +136,6 @@ services:
       # interact with fabric blockchain
       - ../vars/keyfiles:/keyfiles
       - ../vars/profiles/mychannel_network_for_pysdk.json:/project/avalon/sdk/avalon_sdk/connector/blockchains/fabric/network.json
-      - ../vars/blockmark:/project/avalon/blockchain_connector/blockmark
     depends_on:
       - avalon-listener
       - avalon-enclave-manager

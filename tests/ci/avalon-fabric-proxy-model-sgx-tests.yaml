@@ -21,14 +21,13 @@ services:
     volumes:
       - ../vars/keyfiles:/keyfiles
       - ../vars/profiles/mychannel_network_for_pysdk.json:/project/avalon/sdk/avalon_sdk/connector/blockchains/fabric/network.json
-      - ../vars/blockmark:/project/avalon/examples/apps/generic_client/blockmark
       - ../logs:/project/avalon/logs
     entrypoint: "bash -c \"\
         ./tools/run_fabric_proxy_model_tests.sh \""
     depends_on:
       - avalon-enclave-manager
       - avalon-listener
-      - avalon-blockchain-connector
+      - avalon-fabric-connector
 
   avalon-enclave-manager:
     image: avalon-sgx-enclave-manager:${ISOLATION_ID}
@@ -82,15 +81,16 @@ services:
     depends_on:
       - avalon-lmdb
 
-  avalon-blockchain-connector:
-    image: avalon-blockchain-connector:${ISOLATION_ID}
+  avalon-fabric-connector:
+    container_name: avalon-fabric-connector
+    image: avalon-fabric-connector:${ISOLATION_ID}
     environment:
       - http_proxy
       - https_proxy
       - no_proxy
     command: |
       bash -c "
-        avalon_blockchain_connector -b fabric -u http://avalon-listener:1947
+        avalon_fabric_connector -u http://avalon-listener:1947
         tail -f /dev/null
         "
     volumes:
@@ -98,7 +98,6 @@ services:
       # interact with fabric blockchain
       - ../vars/keyfiles:/keyfiles
       - ../vars/profiles/mychannel_network_for_pysdk.json:/project/avalon/sdk/avalon_sdk/connector/blockchains/fabric/network.json
-      - ../vars/blockmark:/project/avalon/blockchain_connector/blockmark
     depends_on:
       - avalon-listener
       - avalon-enclave-manager

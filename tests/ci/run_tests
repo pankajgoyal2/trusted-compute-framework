@@ -78,15 +78,15 @@ main() {
         run_docker_test ./ci/avalon-ganache-proxy-model-wp-tests.yaml
     elif [ "$GANACHE_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
         run_docker_test ./ci/avalon-ganache-proxy-model-wp-sgx-tests.yaml
-	elif [ "$MULTIPLE_WP_DIRECT_MODEL_TESTS" == "1" ]; then
+    elif [ "$MULTIPLE_WP_DIRECT_MODEL_TESTS" == "1" ]; then
         run_docker_test ./ci/avalon-multiple-wp-direct-model-tests.yaml
-	elif [ "$MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS" == "1" ]; then
+    elif [ "$MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS" == "1" ]; then
         run_docker_test ./ci/avalon-multiple-wp-direct-model-sgx-tests.yaml
     fi
 
 }
 
-while getopts "dbfgwstuvxyzijklac" opt; do
+while getopts "dbfgwstuvxyzijklach" opt; do
     case $opt in
         d)
             DIRECT_MODEL_TESTS=1
@@ -136,12 +136,12 @@ while getopts "dbfgwstuvxyzijklac" opt; do
         l)
             GANACHE_PROXY_MODEL_WP_SGX_TESTS=1
             ;;
-		a)
-			MULTIPLE_WP_DIRECT_MODEL_TESTS=1
-			;;
-		c)
-			MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS=1
-			;;
+	a)
+            MULTIPLE_WP_DIRECT_MODEL_TESTS=1
+	    ;;
+	c)
+	    MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS=1
+	    ;;
         h)
             echo "Usage: run_tests script to trigger tests for direct/proxy model"
 	    echo "    run_tests -d       To run (Singleton) direct model tests."
