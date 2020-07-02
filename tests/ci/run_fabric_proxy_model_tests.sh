@@ -150,7 +150,7 @@ yell "#-------------------------------------------------------------------------
 cd ${TCF_HOME}/tests/automation_framework
 mkdir /project/avalon/logs
 echo `pwd`
-pytest -m "sdk" --junitxml /project/avalon/logs/fabric_proxy_results.xml \
+pytest -m "fabric" --junitxml /project/avalon/logs/fabric_proxy_results.xml \
     2>&1 | tee /project/avalon/logs/fabric_proxy_logs.txt
 
 yell "#------------------------------------------------------------------------------------------------"
