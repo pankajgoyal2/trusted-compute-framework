@@ -203,6 +203,7 @@ FROM base_image as final_image
 RUN apt-get update \
  && apt-get install -y -q python3-pip git python3-yaml vim \
  && pip3 install json-rpc web3 py-solc-x nose2 pytest pytest-json-report \
+ && pip3 install pytest-timeout \
  && echo "Install fabric python sdk\n" \
  && pip3 install virtualenv \
  && echo "fastapi==0.27.*" >>requirement.txt \
