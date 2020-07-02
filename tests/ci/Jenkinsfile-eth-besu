@@ -92,6 +92,8 @@ pipeline {
                 chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_eth_proxy_model_tests.sh
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
                 '''
             }
         }
