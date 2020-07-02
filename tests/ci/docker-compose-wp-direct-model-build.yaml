@@ -49,6 +49,7 @@ services:
         - https_proxy
         - no_proxy
         - ENCLAVE_TYPE=wpe
+        - WORKLOADS=echo-result;heart-disease-eval;inside-out-eval;simple-wallet
     depends_on:
       - avalon-lmdb
       - avalon-listener
