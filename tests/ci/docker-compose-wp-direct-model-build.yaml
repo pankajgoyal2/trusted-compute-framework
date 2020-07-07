@@ -15,16 +15,6 @@
 version: '3.5'
 
 services:
-  avalon-wp-direct-model-tests:
-    image: avalon-shell:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-
   avalon-kme:
     image: avalon-enclave-manager-kme:${ISOLATION_ID}
     build:
@@ -42,36 +32,8 @@ services:
   avalon-enclave-manager:
     image: avalon-enclave-manager-wpe:${ISOLATION_ID}
     build:
-      context: ..
-      dockerfile: ./enclave_manager/Dockerfile
       args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
         - ENCLAVE_TYPE=wpe
         - WORKLOADS=echo-result;heart-disease-eval;inside-out-eval;simple-wallet
     depends_on:
-      - avalon-lmdb
-      - avalon-listener
       - avalon-kme
-
-  avalon-lmdb:
-    image: avalon-lmdb:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./shared_kv_storage/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-
-  avalon-listener:
-    image: avalon-listener:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./listener/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-
