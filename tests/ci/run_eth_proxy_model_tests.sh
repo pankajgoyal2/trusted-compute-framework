@@ -142,6 +142,52 @@ $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --requester_signature
 yell "Test Completed"
 
+yell "QCID_18429_Test Workorder indata by passing Data:null string for heart-disease-eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: null" -o
+yell "Test Completed"
+
+yell "QCID_18428_Test Workorder indata by passing only null string for heart-disease-eval workload"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "heart-disease-eval" \
+    --in_data "null" -o
+yell "Test Completed"
+
+yell "QCID_18422_Test workorder with incorrect workload............"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "echo-result1" --in_data "Hello" -o
+yell "Test Completed"
+
+yell "QCID_20320_Test Workorder with workload valid hex value for echo-client workload"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "6563686f2d726573756c74" --in_data "Hello" -o \
+
+yell "QCID_18411_Test workorder random incorrect indata for heart disease workload............"
+yell "#------------------------------------------------------------------------------------------------"
+try $generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "heart-disease-eval" \
+    --in_data "Data: HelloWorld" -o
+yell "Test Completed"
+
+yell "QCID_18437_Test Workorder with empty indata for echo-client workload"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "echo-result" --in_data "" -o
+yell "Test Completed"
+
+yell "QCID_18439_Test workorder with empty workload............"
+yell "#------------------------------------------------------------------------------------------------"
+$generic_client_path/eth_generic_client.py --blockchain ethereum \
+    --workload_id "" --in_data "12345678" -o
+yell "Test Completed"
+
+yell "Completed Testing ..................."
+
 
 #yell "#------------------------------------------------------------------------------------------------"
 #yell "#------------------------------------------------------------------------------------------------"
