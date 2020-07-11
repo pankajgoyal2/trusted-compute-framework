@@ -126,6 +126,7 @@ services:
       - no_proxy
     command: |
       bash -c "
+        sleep 30
         avalon_ethereum_connector -u http://avalon-listener:1947
         tail -f /dev/null
         "

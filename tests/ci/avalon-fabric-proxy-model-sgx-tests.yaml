@@ -90,7 +90,7 @@ services:
       - no_proxy
     command: |
       bash -c "
-        sleep 30s
+        sleep 30
         avalon_fabric_connector -u http://avalon-listener:1947
         tail -f /dev/null
         "
