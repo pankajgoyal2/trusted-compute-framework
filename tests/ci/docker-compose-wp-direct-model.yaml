@@ -14,17 +14,10 @@
 
 version: '3.5'
 
-services:
-  avalon-besu-proxy-model-wp-tests:
-    image: avalon-shell:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
+volumes:
+  pool-1:
 
+services:
   avalon-kme:
     image: avalon-enclave-manager-kme:${ISOLATION_ID}
     build:
@@ -35,6 +28,23 @@ services:
         - https_proxy
         - no_proxy
         - ENCLAVE_TYPE=kme
+    expose:
+      - 1948
+    volumes:
+      - pool-1:/shared-pool-1
+    command: |
+      bash -c "
+        while true;
+          do
+            if [ -e /shared-pool-1/wpe_mr_enclave.txt ];
+              then mv /shared-pool-1/wpe_mr_enclave.txt /project/avalon/wpe_mr_enclave.txt;
+              break;
+            fi;
+            sleep 1;
+        done;
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --bind http://avalon-kme:1948
+        tail -f /dev/null
+      "
     depends_on:
       - avalon-lmdb
       - avalon-listener
@@ -42,45 +52,24 @@ services:
   avalon-enclave-manager:
     image: avalon-enclave-manager-wpe:${ISOLATION_ID}
     build:
-      context: ..
-      dockerfile: ./enclave_manager/Dockerfile
       args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
         - ENCLAVE_TYPE=wpe
         - WORKLOADS=echo-result;heart-disease-eval;inside-out-eval;simple-wallet
+    expose:
+      - 5555
+    volumes:
+      - pool-1:/shared-pool-1
+    command: |
+      bash -c "
+        mv /project/avalon/wpe_mr_enclave.txt /shared-pool-1
+        enclave_manager --lmdb_url http://avalon-lmdb:9090 --kme_listener_url http://avalon-kme:1948
+        tail -f /dev/null
+      "
     depends_on:
       - avalon-lmdb
       - avalon-listener
       - avalon-kme
 
-  avalon-lmdb:
-    image: avalon-lmdb:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./shared_kv_storage/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-
   avalon-listener:
-    image: avalon-listener:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./listener/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-
-  avalon-ethereum-connector:
-    image: avalon-ethereum-connector:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: ./blockchain_connector/docker/Dockerfile-ethereum
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
+    expose:
+      - 5555
