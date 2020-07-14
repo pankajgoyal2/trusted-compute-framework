@@ -57,7 +57,7 @@ pipeline {
                 docker system prune -af
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/dev_repo
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo
-                git clone https://github.com/hyperledger/avalon.git
+                git clone https://github.com/hyperledger/avalon.git -b pre-release-v0.6
                 cd avalon
 
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/ci_repo
