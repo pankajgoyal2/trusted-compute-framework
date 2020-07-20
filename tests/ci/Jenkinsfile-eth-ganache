@@ -81,17 +81,15 @@ pipeline {
                 
                 chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docs/dev-environments/ethereum/ganache/startup.sh
 
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-ganache-proxy-model-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-ganache-proxy-model-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-ganache-proxy-model-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-ganache-proxy-model-wp-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-sgx-build.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-ganache-proxy-model-wp-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/avalon-ganache-proxy-model-wp-sgx-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-ganache-proxy-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-ganache-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
                 chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_eth_proxy_model_tests.sh
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_eth_proxy_model_tests.sh
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_fabric_proxy_model_tests.sh
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
                 cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
@@ -119,18 +117,18 @@ pipeline {
                 echo `pwd`
                 if [ "$WORKER_MODE" = "SINGLETON" ]; then
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        docker-compose -f ci/docker-compose-ganache-proxy-model-build.yaml build
+                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-ganache-proxy-model.yaml build
                     else
                         ./scripts/sgx-hw.sh config/singleton_enclave_config.toml
-                        docker-compose -f ci/docker-compose-ganache-proxy-model-build.yaml -f ci/docker-compose-direct-model-sgx-build.yaml build
+                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-ganache-proxy-model.yaml -f ci/docker-compose-direct-model-sgx.yaml build
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        docker-compose -f ci/docker-compose-ganache-proxy-model-wp-build.yaml build
+                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-ganache-proxy-model.yaml build
                     else
                         ./scripts/sgx-hw.sh config/kme_config.toml
                         ./scripts/sgx-hw.sh config/wpe_config.toml
-                        docker-compose -f ci/docker-compose-ganache-proxy-model-wp-build.yaml -f ci/docker-compose-wp-direct-model-sgx-build.yaml build
+                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-ganache-proxy-model.yaml -f ci/docker-compose-direct-model-sgx.yaml build
                     fi
                 fi
 

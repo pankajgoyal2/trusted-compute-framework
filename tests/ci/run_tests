@@ -47,41 +47,75 @@ GANACHE_PROXY_MODEL_WP_SGX_TESTS=0
 main() {
 
     if [ "$DIRECT_MODEL_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-direct-model-tests.yaml
+        run_docker_test ./ci/docker-compose-direct-model.yaml
     elif [ "$BESU_PROXY_MODEL_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-besu-proxy-model-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-besu-proxy-model.yaml -f docker-compose-besu-tests.yaml config > besu-proxy-model.yaml
+        run_docker_test ./besu-proxy-model.yaml
     elif [ "$GANACHE_PROXY_MODEL_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-ganache-proxy-model-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-ganache-proxy-model.yaml -f docker-compose-ganache-tests.yaml config > ganache-proxy-model.yaml
+        run_docker_test ./ganache-proxy-model.yaml
     elif [ "$FABRIC_PROXY_MODEL_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-fabric-proxy-model-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-fabric-proxy-model.yaml -f docker-compose-fabric-tests.yaml config > fabric-proxy-model.yaml
+        run_docker_test ./fabric-proxy-model.yaml
     elif [ "$WP_DIRECT_MODEL_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-wp-direct-model-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml config > wp-direct-model.yaml
+        run_docker_test ./wp-direct-model.yaml
     elif [ "$DIRECT_MODEL_SGX_TESTS" == "1" ]; then
-    	run_docker_test ./ci/avalon-direct-model-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-direct-model-sgx.yaml config > direct-model-sgx.yaml
+        run_docker_test ./direct-model-sgx.yaml
     elif [ "$WP_DIRECT_MODEL_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-wp-direct-model-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-wp-direct-model-sgx.yaml config > wp-direct-model-sgx.yaml
+        run_docker_test ./wp-direct-model-sgx.yaml
     elif [ "$BESU_PROXY_MODEL_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-besu-proxy-model-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-besu-proxy-model.yaml -f docker-compose-besu-tests.yaml -f docker-compose-direct-model-sgx.yaml config > besu-proxy-model-sgx.yaml
+        run_docker_test ./besu-proxy-model-sgx.yaml
     elif [ "$GANACHE_PROXY_MODEL_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-ganache-proxy-model-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-ganache-proxy-model.yaml -f docker-compose-ganache-tests.yaml -f docker-compose-direct-model-sgx.yaml config > ganache-proxy-model-sgx.yaml
+        run_docker_test ./ganache-proxy-model-sgx.yaml
     elif [ "$FABRIC_PROXY_MODEL_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-fabric-proxy-model-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-fabric-proxy-model.yaml -f docker-compose-fabric-tests.yaml -f docker-compose-direct-model-sgx.yaml config > fabric-proxy-model-sgx.yaml
+        run_docker_test ./fabric-proxy-model-sgx.yaml
     elif [ "$FABRIC_PROXY_MODEL_WP_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-fabric-proxy-model-wp-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-fabric-proxy-model.yaml -f docker-compose-fabric-tests.yaml config > wp-fabric-proxy-model.yaml
+        run_docker_test ./wp-fabric-proxy-model.yaml
     elif [ "$FABRIC_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-fabric-proxy-model-wp-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-fabric-proxy-model.yaml -f docker-compose-direct-model-sgx.yaml -f docker-compose-fabric-tests.yaml config > wp-fabric-proxy-model-sgx.yaml
+        run_docker_test ./wp-fabric-proxy-model-sgx.yaml
     elif [ "$BESU_PROXY_MODEL_WP_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-besu-proxy-model-wp-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-besu-proxy-model.yaml -f docker-compose-besu-tests.yaml config > wp-besu-proxy-model.yaml
+        run_docker_test ./wp-besu-proxy-model.yaml
     elif [ "$BESU_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-besu-proxy-model-wp-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-besu-proxy-model.yaml -f docker-compose-direct-model-sgx.yaml -f docker-compose-besu-tests.yaml config > wp-besu-proxy-model-sgx.yaml
+        run_docker_test ./wp-besu-proxy-model-sgx.yaml
     elif [ "$GANACHE_PROXY_MODEL_WP_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-ganache-proxy-model-wp-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-ganache-proxy-model.yaml -f docker-compose-ganache-tests.yaml config > wp-ganache-proxy-model.yaml
+        run_docker_test ./wp-ganache-proxy-model.yaml
     elif [ "$GANACHE_PROXY_MODEL_WP_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-ganache-proxy-model-wp-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-ganache-proxy-model.yaml -f docker-compose-direct-model-sgx.yaml -f docker-compose-ganache-tests.yaml config > wp-ganache-proxy-model-sgx.yaml
+        run_docker_test ./wp-ganache-proxy-model-sgx.yaml
     elif [ "$MULTIPLE_WP_DIRECT_MODEL_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-multiple-wp-direct-model-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-multiple-wp-direct-model.yaml config > multiple-wp-direct-model.yaml
+        run_docker_test ./multiple-wp-direct-model.yaml
     elif [ "$MULTIPLE_WP_DIRECT_MODEL_SGX_TESTS" == "1" ]; then
-        run_docker_test ./ci/avalon-multiple-wp-direct-model-sgx-tests.yaml
+        cd ci
+        docker-compose -f docker-compose-direct-model.yaml -f docker-compose-wp-direct-model.yaml -f docker-compose-multiple-wp-direct-model.yaml -f docker-compose-multiple-wp-direct-model-sgx.yaml config > multiple-wp-direct-model-sgx.yaml
+        run_docker_test ./multiple-wp-direct-model-sgx.yaml
     fi
 
 }

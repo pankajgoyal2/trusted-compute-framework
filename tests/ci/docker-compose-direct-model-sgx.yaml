@@ -15,37 +15,23 @@
 version: '3.5'
 
 services:
-  avalon-wp-direct-model-sgx-tests:
-    image: avalon-shell:${ISOLATION_ID}
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-
-  avalon-kme:
-    image: avalon-sgx-enclave-manager-kme:${ISOLATION_ID}
-    build:
-      args:
-        - SGX_MODE=HW
-    volumes:
-      # Map aesm service on host to docker, required only in HW mode.
-      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
-    devices:
-      - "/dev/isgx:/dev/isgx"
-
   avalon-enclave-manager:
-    image: avalon-sgx-enclave-manager-wpe:${ISOLATION_ID}
+    image: avalon-sgx-enclave-manager:${ISOLATION_ID}
     build:
       args:
         - SGX_MODE=HW
-    volumes:
-      # Map aesm service on host to docker, required only in HW mode.
-      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
-    devices:
-      - "/dev/isgx:/dev/isgx"
     depends_on:
       - avalon-lmdb
+    expose:
+      # ZMQ socket port.
+      - 5555
+    volumes:
+      # Map aesm service on host to docker, required only in HW mode.
+      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+    devices:
+      - "/dev/isgx:/dev/isgx"
+
+  avalon-listener:
+    expose:
+      - 5555
 
