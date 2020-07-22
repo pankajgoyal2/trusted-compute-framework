@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:bionic as base_image
+FROM ubuntu:20.04 as base_image
 
 # Ignore timezone prompt in apt
 ENV DEBIAN_FRONTEND=noninteractive

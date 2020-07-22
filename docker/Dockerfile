@@ -25,7 +25,7 @@
 #   --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy --build-arg ftp_proxy=$ftp_proxy
 
 # -------------=== build avalon shell image ===-------------
-FROM ubuntu:bionic as base_image
+FROM ubuntu:20.04 as base_image
 
 # Ignore timezone prompt in apt
 ENV DEBIAN_FRONTEND=noninteractive
@@ -47,8 +47,10 @@ RUN ln -sf /usr/bin/python3 /usr/bin/python
 # -------------=== python build ===-------------
 
 #Build python intermediate docker image
-FROM ubuntu:bionic as python_image
+FROM ubuntu:20.04 as python_image
 
+# Ignore timezone prompt in apt
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Add necessary packages
 RUN apt-get update \
@@ -68,7 +70,10 @@ RUN pip3 install setuptools
 # -------------=== Build openssl_image ===-------------
 
 #Build openssl intermediate docker image
-FROM ubuntu:bionic as openssl_image
+FROM ubuntu:20.04 as openssl_image
+
+# Ignore timezone prompt in apt
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
  && apt-get install -y -q \
@@ -77,6 +82,7 @@ RUN apt-get update \
     make \
     wget \
     tar \
+    gcc \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -97,12 +103,16 @@ RUN OPENSSL_VER=1.1.1d \
 # -------------=== common/cpp build ===-------------
 
 #Build common/cpp intermediate docker image
-FROM ubuntu:bionic as common_cpp_image
+FROM ubuntu:20.04 as common_cpp_image
+
+# Ignore timezone prompt in apt
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
  && apt-get install -y -q \
     pkg-config \
     cmake \
+    g++ \
     make
 
 

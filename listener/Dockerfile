@@ -15,7 +15,7 @@
 
 # -------------=== listener build ===-------------
 
-FROM ubuntu:bionic as base_image
+FROM ubuntu:20.04 as base_image
 
 # Ignore timezone prompt in apt
 ENV DEBIAN_FRONTEND=noninteractive
@@ -37,8 +37,10 @@ RUN ln -sf /usr/bin/python3 /usr/bin/python
 # -------------=== python build ===-------------
 
 #Build python intermediate docker image
-FROM ubuntu:bionic as python_image
+FROM ubuntu:20.04 as python_image
 
+# Ignore timezone prompt in apt
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Add necessary packages
 RUN apt-get update \
