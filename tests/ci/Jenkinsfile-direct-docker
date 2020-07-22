@@ -56,34 +56,33 @@ pipeline {
                 docker system prune -af
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/dev_repo
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo
-                git clone https://github.com/hyperledger/avalon.git
-                cd avalon
+                git clone --single-branch --branch avalon-ubuntu-20.04 https://github.com/pankajgoyal2/trusted-compute-framework.git
 
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/ci_repo
                 cd $NIGHTLY_WORKSPACE_DIR/ci_repo
-                git clone --single-branch --branch avalon-ci https://github.com/pankajgoyal2/trusted-compute-framework.git
+                git clone --single-branch --branch ci-ubuntu-20.04 https://github.com/pankajgoyal2/trusted-compute-framework.git
 
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/val_repo
                 cd $NIGHTLY_WORKSPACE_DIR/val_repo
                 git clone --single-branch --branch automation_framework_rework  https://github.com/jinengandhi-intel/avalon.git
                 cd avalon
 
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-multiple-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-multiple-wp-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tools/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tools/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tools/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/docker/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_docker_test
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_docker_test
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-multiple-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-multiple-wp-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
                 '''
             }
         }
@@ -91,7 +90,7 @@ pipeline {
         stage('Build Avalon Direct Model Components') {
             steps {
                 sh '''
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                 mkdir logs
                 echo `pwd`
                 if [ "$WORKER_MODE" = "SINGLETON" ]; then
@@ -103,11 +102,19 @@ pipeline {
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml build
+                        if [ "$WORKER_MODE" = "SINGLE_POOL" ]; then
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml build
+                        else
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-multiple-wp-direct-model.yaml build
+                        fi
                     else
                         ./scripts/sgx-hw.sh config/kme_config.toml
                         ./scripts/sgx-hw.sh config/wpe_config.toml
-                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-wp-direct-model-sgx.yaml build
+                        if [ "$WORKER_MODE" = "SINGLE_POOL" ]; then
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-wp-direct-model-sgx.yaml build
+                        else
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-multiple-wp-direct-model.yaml -f ci/docker-compose-multiple-wp-direct-model-sgx.yaml build
+                        fi
                     fi
                 fi
                 '''
@@ -117,26 +124,26 @@ pipeline {
         stage('Run Avalon Direct Model Tests') {
             steps {
                 sh '''
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                 echo `pwd`
                 if [ "$WORKER_MODE" = "SINGLETON" ]; then
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -d 2>&1 | tee logs/genericclient_output.txt
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -d 2>&1 | tee logs/genericclient_output.txt
                     else
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -s 2>&1 | tee logs/genericclient_output.txt
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -s 2>&1 | tee logs/genericclient_output.txt
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
                         if [ "$WORKER_MODE" = "SINGLE_POOL" ]; then
-                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -w 2>&1 | tee logs/genericclient_output.txt
+                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -w 2>&1 | tee logs/genericclient_output.txt
                         else
-                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -a 2>&1 | tee logs/genericclient_output.txt
+                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -a 2>&1 | tee logs/genericclient_output.txt
                         fi
                     else
                         if [ "$WORKER_MODE" = "SINGLE_POOL" ]; then
-                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -t 2>&1 | tee logs/genericclient_output.txt
+                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -t 2>&1 | tee logs/genericclient_output.txt
                         else
-                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -c 2>&1 | tee logs/genericclient_output.txt
+                            INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -c 2>&1 | tee logs/genericclient_output.txt
                         fi
                     fi
                 fi
@@ -148,7 +155,7 @@ pipeline {
         stage('Create git archive') {
             steps {
                 sh '''
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                 REPO=$(git remote show -n origin | grep Fetch | awk -F'[/.]' '{print $6}')
                 git archive HEAD --format=zip -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.zip
                 git archive HEAD --format=tgz -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.tgz

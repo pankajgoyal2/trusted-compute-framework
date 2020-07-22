@@ -61,11 +61,11 @@ pipeline {
                 docker system prune -af
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/dev_repo
                 cd $NIGHTLY_WORKSPACE_DIR/dev_repo
-                git clone https://github.com/hyperledger/avalon.git
+                git clone --single-branch --branch avalon-ubuntu-20.04 https://github.com/pankajgoyal2/trusted-compute-framework.git
 
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/ci_repo
                 cd $NIGHTLY_WORKSPACE_DIR/ci_repo
-                git clone --single-branch --branch avalon-ci https://github.com/pankajgoyal2/trusted-compute-framework.git
+                git clone --single-branch --branch ci-ubuntu-20.04 https://github.com/pankajgoyal2/trusted-compute-framework.git
 
                 mkdir -p $NIGHTLY_WORKSPACE_DIR/val_repo
                 cd $NIGHTLY_WORKSPACE_DIR/val_repo
@@ -74,23 +74,23 @@ pipeline {
 
                 sed -i "s/proxy_mode = False/proxy_mode = True/g" tests/automation_framework/env.py
                 sed -i "s/blockchain_type = ''/blockchain_type = 'fabric'/g" tests/automation_framework/env.py
-                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-proxy-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/ci/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/run_fabric_proxy_model_tests.sh
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tools/
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/tests/ci/run_eth_proxy_model_tests.sh
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/docker/
-                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
-                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_docker_test
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/ci/Demo_Tests $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-direct-model-sgx.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-wp-direct-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-proxy-model.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/docker-compose-fabric-tests.yaml $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/ci/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/val_repo/avalon/tests/automation_framework $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_fabric_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tools/
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tools/run_fabric_proxy_model_tests.sh
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tools/
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/tests/ci/run_eth_proxy_model_tests.sh
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_tests $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/docker/Dockerfile $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/docker/
+                cp -rf $NIGHTLY_WORKSPACE_DIR/ci_repo/trusted-compute-framework/tests/ci/run_docker_test  $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_docker_test
+                chmod +x $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_docker_test
                 '''
             }
         }
@@ -101,7 +101,7 @@ pipeline {
                     "Build Avalon Proxy Model Components": {
                         script {
                             sh '''
-                            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                             mkdir logs
                             echo `pwd`
                             if [ "$WORKER_MODE" = "SINGLETON" ]; then
@@ -127,8 +127,8 @@ pipeline {
                     "Start fabric network": {
                         script {
                             sh '''
-                            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
-                            export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
+                            export TCF_HOME=$NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                             echo `pwd`
                             ./scripts/start_fabric.sh -w ./ -u
                             '''
@@ -141,19 +141,19 @@ pipeline {
         stage('Run Avalon proxy Model Tests') {
             steps {
                 sh '''
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                 echo `pwd`
                 if [ "$WORKER_MODE" = "SINGLETON" ]; then
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -f 2>&1 | tee logs/genericclient_output.txt
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -f 2>&1 | tee logs/genericclient_output.txt
                     else
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -x 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric SGX mode
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -x 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric SGX mode
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -y 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP mode
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -y 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP mode
                     else
-                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon/bin/run_tests -z 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP SGX mode
+                        INSTALL_TYPE="" $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework/bin/run_tests -z 2>&1 | tee logs/genericclient_output.txt # run_tests doesn't have option for Fabric WP SGX mode
                     fi
                 fi
                 python tests/Demo_Tests/verifytests.py -o logs/genericclient_output.txt
@@ -164,7 +164,7 @@ pipeline {
         stage('Create git archive') {
             steps {
                 sh '''
-                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+                cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
                 REPO=$(git remote show -n origin | grep Fetch | awk -F'[/.]' '{print $6}')
                 git archive HEAD --format=zip -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.zip
                 git archive HEAD --format=tgz -9 --output=$WORKSPACE/${JK_RUNID}_${REPO}.tgz
@@ -178,7 +178,7 @@ pipeline {
         always {
             echo 'Cleaning up fabric network'
             sh '''
-            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/avalon
+            cd $NIGHTLY_WORKSPACE_DIR/dev_repo/trusted-compute-framework
             ./scripts/start_fabric.sh -w ./ -c
             '''
         }

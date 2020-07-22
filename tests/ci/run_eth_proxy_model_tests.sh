@@ -61,77 +61,79 @@ yell "#-------------------------------------------------------------------------
 yell "QCID_18393_Test Workorder success for echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "Hello" -o
+    --workload_id "echo-result" --in_data "Hello" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18402_Test Workorder success for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -o
+    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18404_Test special character for heart disease eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: 25 10 1 67  102 125 1 95 * & ! @ # %" -o
+    --in_data "Data: 25 10 1 67  102 125 1 95 * & ! @ # %" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18396_Test alpha numeric characters for echo client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "Hello12345" -o
+    --workload_id "echo-result" --in_data "Hello12345" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18397_Test workorder only digits for echo client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "12345678" -o
+    --workload_id "echo-result" --in_data "12345678" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18395_Test workorder only spaces for echo client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "     " -o
+    --workload_id "echo-result" --in_data "     " -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18403_Test workorder only special character for heart disease eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: $ @ ! %  ^ & * # * & ! @ # %" -o
+    --in_data "Data: $ @ ! %  ^ & * # * & ! @ # %" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18406_Test workorder by passing paragraph for echo client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "JMeter is a performance test tool. So it runs in parallel using multi-threading. However you can also use just 1 thread group and set the thread count to one to run it in sequence" -o
+    --workload_id "echo-result" --in_data "JMeter is a performance test tool. So it runs in parallel using multi-threading. However you can also use just 1 thread group and set the thread count to one to run it in sequence" -o \
+    -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18394_Test workorder special character payload for echo client workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "#@!$%@#&*()$%#" -o
+    --workload_id "echo-result" --in_data "#@!$%@#&*()$%#" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18430_Test Workorder indata by passing negative value for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 -1" -o
+    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 -1" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_20315_Test Workorder with empty indata for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "heart-disease-eval" --in_data "" -o
+    --workload_id "heart-disease-eval" --in_data "" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_20318_Test Workorder with requester signature echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "RequesterSignatureEnabled1" -o --requester_signature
+    --workload_id "echo-result" --in_data "RequesterSignatureEnabled1" -o --requester_signature \
+    -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_20319_Test Workorder with requester signature for heart-disease-eval workload"
@@ -139,51 +141,51 @@ yell "#-------------------------------------------------------------------------
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
     --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -o \
-    --requester_signature
+    --requester_signature -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18429_Test Workorder indata by passing Data:null string for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: null" -o
+    --in_data "Data: null" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18428_Test Workorder indata by passing only null string for heart-disease-eval workload"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "null" -o
+    --in_data "null" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18422_Test workorder with incorrect workload............"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result1" --in_data "Hello" -o
+    --workload_id "echo-result1" --in_data "Hello" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_20320_Test Workorder with workload valid hex value for echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "6563686f2d726573756c74" --in_data "Hello" -o \
+    --workload_id "6563686f2d726573756c74" --in_data "Hello" -o -w "singleton-worker-1" \
 
 yell "QCID_18411_Test workorder random incorrect indata for heart disease workload............"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/eth_generic_client.py --blockchain ethereum \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: HelloWorld" -o
+    --in_data "Data: HelloWorld" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18437_Test Workorder with empty indata for echo-client workload"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "echo-result" --in_data "" -o
+    --workload_id "echo-result" --in_data "" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "QCID_18439_Test workorder with empty workload............"
 yell "#------------------------------------------------------------------------------------------------"
 $generic_client_path/eth_generic_client.py --blockchain ethereum \
-    --workload_id "" --in_data "12345678" -o
+    --workload_id "" --in_data "12345678" -o -w "singleton-worker-1"
 yell "Test Completed"
 
 yell "Completed Testing ..................."
