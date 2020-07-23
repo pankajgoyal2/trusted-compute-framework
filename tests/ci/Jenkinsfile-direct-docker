@@ -103,11 +103,19 @@ pipeline {
                     fi
                 else
                     if [ "$SGX_MODE" = "SIM" ]; then
-                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml build
+                        if [ "$WORKER_MODE" = "SINGLE_POOL" ]; then
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml build
+                        else
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-multiple-wp-direct-model.yaml build
+                        fi
                     else
                         ./scripts/sgx-hw.sh config/kme_config.toml
                         ./scripts/sgx-hw.sh config/wpe_config.toml
-                        docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-wp-direct-model-sgx.yaml build
+                        if [ "$WORKER_MODE" = "SINGLE_POOL" ]; then
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-wp-direct-model-sgx.yaml build
+                        else
+                            docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-wp-direct-model.yaml -f ci/docker-compose-multiple-wp-direct-model.yaml -f ci/docker-compose-multiple-wp-direct-model-sgx.yaml build
+                        fi
                     fi
                 fi
                 '''
