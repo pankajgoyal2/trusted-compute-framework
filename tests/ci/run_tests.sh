@@ -104,18 +104,19 @@ done
 
 yell "Start testing echo client with service uri ................"
 yell "#------------------------------------------------------------------------------------------------"
-try $echo_client_path/echo_client.py -m "Hello world" -s "http://$LISTENER_URL:1947" -dh
+try $echo_client_path/echo_client.py -m "Hello world" -s "http://$LISTENER_URL:1947" \
+    -w "singleton-worker-1" -dh
 
 yell "Start testing generic client for echo workload ................"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/generic_client.py --uri "http://$LISTENER_URL:1947" \
-    --workload_id "echo-result" --in_data "Hello"
+    --workload_id "echo-result" --in_data "Hello" -w "singleton-worker-1"
 
 yell "Start testing generic client for heart disease eval workload ................"
 yell "#------------------------------------------------------------------------------------------------"
 try $generic_client_path/generic_client.py --uri "http://$LISTENER_URL:1947" \
     --workload_id "heart-disease-eval" \
-    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1"
+    --in_data "Data: 25 10 1 67  102 125 1 95 5 10 1 11 36 1" -w "singleton-worker-1"
 
 yell "#------------------------------------------------------------------------------------------------"
 yell "#------------------------------------------------------------------------------------------------"
