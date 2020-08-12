@@ -24,7 +24,7 @@ fi
 SCRIPTDIR="$(dirname $(readlink --canonicalize ${BASH_SOURCE}))"
 SRCDIR="$(realpath ${SCRIPTDIR}/..)"
 echo_client_path="${TCF_HOME}/examples/apps/echo/client"
-automation_test_path="${TCF_HOME}/tests/automation_framework"
+automation_test_path="${TCF_HOME}/tests/avalon_test_framework"
 generic_client_path="${TCF_HOME}/examples/apps/generic_client"
 # Read Listener port from config file
 listener_port=`grep listener_port ${TCF_HOME}/config/tcs_config.toml | awk {'print $3'}`
@@ -311,7 +311,7 @@ yell "Start Automated Tests  ................"
 yell "#------------------------------------------------------------------------------------------------"
 yell "#------------------------------------------------------------------------------------------------"
 
-cd ${TCF_HOME}/tests/automation_framework
+cd ${TCF_HOME}/tests/avalon_test_framework
 mkdir /project/avalon/logs
 echo `pwd`
 pytest -m "sdk" --junitxml /project/avalon/logs/direct_docker_results.xml \

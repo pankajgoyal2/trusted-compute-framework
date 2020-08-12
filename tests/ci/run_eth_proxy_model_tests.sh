@@ -36,7 +36,7 @@ sleep 60s
 
 SCRIPTDIR="$(dirname $(readlink --canonicalize ${BASH_SOURCE}))"
 SRCDIR="$(realpath ${SCRIPTDIR}/..)"
-automation_test_path="${TCF_HOME}/tests/automation_framework"
+automation_test_path="${TCF_HOME}/tests/avalon_test_framework"
 generic_client_path="${TCF_HOME}/examples/apps/generic_client"
 
 yell "Start testing Ethereum generic client for echo result workload ................"
@@ -200,7 +200,7 @@ yell "Completed Testing ..................."
 #yell "#------------------------------------------------------------------------------------------------"
 #yell "#------------------------------------------------------------------------------------------------"
 
-cd ${TCF_HOME}/tests/automation_framework
+cd ${TCF_HOME}/tests/avalon_test_framework
 mkdir /project/avalon/logs
 echo `pwd`
 pytest -m "ethereum" --junitxml /project/avalon/logs/eth_besu_proxy_results.xml \
