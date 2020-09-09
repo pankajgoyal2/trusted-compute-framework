@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.shell.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.shell.name }}
+  template:
+    metadata:
+      name: {{ .Values.shell.name }}
+      labels:
+        app: {{ .Values.shell.name }}
+    spec:
+      containers:
+      - image: {{ .Values.shell.name }}-dev:latest
+        name: {{ .Values.shell.name }}
+        imagePullPolicy: Never
+        command: ["/bin/bash"]
+        args: ["-c", "tail -f /dev/null"]

@@ -1,0 +1,20 @@
+shell:
+  name: avalon-shell
+
+lmdb:
+  name: avalon-lmdb
+  containerPort: 9090
+  hostPort: 9090
+
+enclaveManager:
+  name: avalon-enclave-manager
+  zmqPort: 5555
+
+listener:
+  name: avalon-listener
+  containerPort: 1947
+  hostPort: 1947
+  zmqPort: 5555
+
+propose:
+  name: propose-request
