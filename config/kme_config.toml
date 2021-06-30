@@ -20,6 +20,27 @@ LogFile  = "__screen__"
 # EnclaveModule -- configuration of the Intel SGX Enclave
 # -------------------------------------------------------
 [EnclaveModule]
+# Attestation type
+attestation_type = "EPID"
+
+# TEE enclave library to use.
+enclave_library = "libavalon-kme-enclave.signed.so"
+enclave_library_path = "tc/sgx/trusted_worker_manager/enclave/build/lib/"
+
+num_of_enclaves = "1"
+# MRENCLAVE for WPE that will be allowed to register with this KME
+# is read from a file. This file is generated using a script after
+# the WPE enclave has been built.
+wpe_mrenclave_read_from_file = "wpe_mr_enclave.txt"
+
+# Sealed data from trusted enclave is stored at this location for recovery
+# in case of abrubt shutdown.
+sealed_data_path = ".sealed/.sealed.data"
+
+# ------------------------------------------------------------
+# Epid attestation data
+# ------------------------------------------------------------
+[EpidAttestation]
 # Service Provider ID (SPID) is a 32-digit hex string tied to the
 # enclave implementation. Replace dummy SPID with value obtained after
 # subscription to run TCS in Intel SGX HW mode.
@@ -36,21 +57,6 @@ ias_url = "https://api.trustedservices.intel.com/sgx/dev"
 # of requests submitted to the IAS server. Obtain the key by subscribing in
 # the portal https://api.portal.trustedservices.intel.com/
 ias_api_key = "112233445566778899aabbccddeeff00"
-
-# TEE enclave library to use.
-enclave_library = "libavalon-kme-enclave.signed.so"
-enclave_library_path = "tc/sgx/trusted_worker_manager/enclave/build/lib/"
-
-num_of_enclaves = "1"
-# MRENCLAVE for WPE that will be allowed to register with this KME
-# @TODO : Instead of hardcoding, read from a file (not part of codebase but generated
-#        using tool) as below where MRENCLAVE is saved.
-# This file is generated during WPE Enclave build
-# wpe_mrenclave_read_from_file = wpe_mr_enclave.txt
-wpe_mrenclave = "729B98A754CBBDE2C307E2563E467D8A965E9345A17B2A32E5EF4F083B07F8DE"
-
-# The type of enclave viz - KME/WPE/SWE
-enclave_type = "KME"
 
 [KMEListener]
 # URL of KMEListener where a Work order processor can send requests meant for
@@ -84,9 +90,11 @@ WorkOrderInvocationAddress = ""
 ReceiptInvocationAddress = ""
 # Ethereum Address used by the worker to submit transactions
 FromAddress = ""
-# Replace ApplicationTypeId and OrganizationId with real hexadecimal values
-ApplicationTypeId = "11aa22bb33cc44dd"
-OrganizationId = "aabbcc1234ddeeff"
+# Replace ApplicationTypeId and OrganizationId with real hexadecimal values, 64 characters
+# longs. As per EEA spec v1.1, they are bytes32 which effectively is 64 hex characters.
+ApplicationTypeId = "11aa22bb33cc44dd11aa22bb33cc44dd11aa22bb33cc44dd11aa22bb33cc44dd"
+OrganizationId = "aabbcc1234ddeeffaabbcc1234ddeeffaabbcc1234ddeeffaabbcc1234ddeeff"
+
 
 # URI used by worker to process work order receipts
 ReceiptInvocationUri = ""

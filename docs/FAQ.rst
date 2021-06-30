@@ -107,12 +107,57 @@ https://github.com/hyperledger/avalon/issues
 How many nodes does Avalon support?
 -----------------------------------
 One, specifically the Avalon blockchain connector that connects to
-a blockchain node.  In the future Avalon will support processing
+a blockchain node. In the future Avalon will support processing
 multiple work orders in parallel, but there will still be one connector.
 No other Avalon component connects to the blockchain.
 
 Another Avalon instance unrelated to any other Avalon instance may connect
 independently to the blockchain.
+
+What synchronization modes does Avalon Support?
+-----------------------------------------------
+The Off-Chain Trusted Compute Spec has three modes (asynchronous,
+notify, and synchronous). Avalon currently supports async mode.
+Synchronous mode using ZMQ is available for Singleton Mode workers. 
+
+Is the LMBD database available for application use?
+---------------------------------------------------
+No, that is not the intention. LMDB is dedicated for internal use by Avalon.
+Application data can be stored in a separate database or in files.
+The only potential external use that should be made of LMDB is by an
+Avalon hosting service for its monitoring and administration tools.
+
+Is there a mechanism to auto-trim the LMDB database?
+----------------------------------------------------
+Avalon is supposed to auto-trim LMDB after exceeding a maximum threshold
+by removing old entries. It may not be fuly implemented yet,
+but that is the plan. There is also an explicit API to delete a specific
+workorder, so the orchestrator app can explicitly remove completed workorders.
+This is especially useful to remove large, obsolete responses so as to not
+exhaust the database. This API mitigates the LMDB size but is not intended as
+a replacement for auto-clean up.
+
+In the future, a clean up tool may be added.
+
+Does Avalon support a Library OS (LibOS)?
+-----------------------------------------
+Avalon does not support a LibOS now, but support is planned in the future,
+initially with Graphene.
+
+Does the Avalon Enclave Manager support multiple workers?
+---------------------------------------------------------
+Currently Avalon is hard-coded to suport one Enclave worker.
+Support for multiple workers running in parallel is planned in the future.
+
+How can Avalon workers coordinate in Direct Mode (without a blockchain)?
+------------------------------------------------------------------------
+In Proxy Mode, Avalon workers can coordinate with blockchain entries.
+In Direct Mode, one possible solution is to write a
+"coordinator" or "governor" worker that acts as a trusted server and stores
+any global registry information (such as data access rights and dataset keys)
+required by all the enclave workers.
+In essence this mimics blockchain functionality through some sort of
+distributed database or ledger.
 
 
 Installation and Configuration
@@ -160,6 +205,24 @@ on ACC without ``/dev/isgx`` installed you get this error:
 The fix is to remove ``/dev/sgx`` then install ``/dev/isgx``
 For instructions on how to do tis, see "Intel SGX in Hardware Mode" at
 https://github.com/hyperledger/avalon/blob/master/PREREQUISITES.md#sgx
+
+How can I prevent a worker from using old keys when I restart a KME or a Singleton worker?
+------------------------------------------------------------------------------------------
+By default, workers use the same signing and encryption key pairs (asymmetric keys) across
+restarts to ensure validity of historical work order requests/responses. This is also done
+to ensure a smooth functioning in case of abrupt failures of the worker. Sealed data from
+respective worker enclaves are used to recover keys across restarts.
+However, this default behavior can be overriden if fresh pairs of aforementioned keys are
+desired. For this, it has to be ensured that the sealed data created during previous
+startup of the enclave manager (KME or Singleton) is cleaned up before starting again.
+This has been provisioned in the docker mode already. Prepend ``CLEAN_SEALED_DATA=1`` to
+the docker-compose command. For example -
+
+   .. code:: none
+
+       CLEAN_SEALED_DATA=1 docker-compose up -d
+
+You could also update the value of ``CLEAN_SEALED_DATA`` to ``1`` in the ``.env`` file at project root directory.
 
 
 Software Development
@@ -220,8 +283,13 @@ What TCP ports does Avalon use?
   The URL is ``http://localhost:9090/`` or, for Docker,
   ``http://avalon-lmdb:9090/``
 - TCP 5555: ZMQ connections to Avalon Enclave Manager from Avalon Listener.
+  This is used by Avalon singleton enclave workers using Synchronous Mode.
   The URL is ``tcp://localhost:5555`` or, for Docker,
   ``tcp://avalon-enclave-manager:5555``
+- TCP 7777: ZMQ socket port used by Avalon Graphene Enclave Manager
+  to communicate with Graphene Python Worker.
+  The URL is ``tcp://localhost:7777`` or, for Docker,
+  ``tcp://graphene-python-worker:7777``
 - TCP 1948: connections to Avalon Key Management Enclave (KME).
   Used only for Worker Pool Mode (not Singleton Mode).
   The URL is ``tcp://localhost:1948`` or, for Docker,
@@ -266,6 +334,25 @@ If using Docker, specify the URI as the name of the Docker container running
 the Avalon Listener:  ``http://avalon-listener:1947`` on the
 command line (the option is usually ``--uri`` or ``--service-uri``).
 
+How do I fix ``RuntimeError`` when I make changes to trusted code in enclave managers (KME or Singleton) and try to run?
+------------------------------------------------------------------------------------------------------------------------
+An error stack similar to the one below can be seen if changes are made to the trusted
+code and the enclave manager (KME or Singleton) is restarted.
+
+   .. code:: none
+
+       [02:28:05 ERROR   avalon_enclave_manager.base_enclave_manager] failed to initialize/signup enclave;
+       Traceback (most recent call last):
+       ...
+       RuntimeError
+
+Note that this is only the beginning and end of the error stack. This happens because
+some sealed data from respective enclave is used across enclave lifetimes now. The
+change in the enclave itself across 2 lifetimes, with the second enclave trying to use
+the sealed data from the previous run causes this. The solution is to remove the sealed
+data before starting again. Refer to the steps mentioned in ``prevent a worker from
+using old keys`` in `Installation and Configuration`_ to achieve cleanup.
+
 
 Docker and Containers
 =====================
@@ -279,7 +366,7 @@ build and setup Avalon, but you can also build without Docker
 
 How do I fix this docker-compose error: ``Invalid interpolation format for "build" option``
 -------------------------------------------------------------------------------------------
-Your docker-compose is too old.  Version 1.17.1 works OK.
+Your docker-compose is too old. Version 1.17.1 works OK.
 
 How do I open a TCP port in Docker?
 -----------------------------------
@@ -305,12 +392,27 @@ internal Docker container network. This should already be present:
        expose:
         - 1947
 
+Why are some Docker Compose .yaml files in $TCF_HOME and others in $TCF_HOME/docker/compose?
+--------------------------------------------------------------------------------------------
+The usual convention is to have a default ``docker-compose.yaml`` file
+in the base source directory so that a newbie can just run the command
+``docker-compose up`` and a bare minimal setup should be running.
+The other flavors of .yaml files, be it for proxy or worker pool,
+have been moved from $TCF_HOME to ward off confusion and cluttering
+in the base source directory.
+
+What is the equivalent of "make clean" using Docker build?
+----------------------------------------------------------
+The closest to that is running ``git clean`` to remove all generated files.
+
 
 Videos
 ========
 
 - Introduction
-
+  - `Hyperledger Avalon [Introduction] (Eugene Yarmosh, 2020)
+    <https://youtu.be/I16EhP23HTg>`_
+    (from Hyperledger Denver Meetup) (1:00:44)
   - `Introduction to Hyperledger Avalon (Manoj Gopalakrishnan, 2019)
     <https://youtu.be/YRXfzHzJVaU>`_
     (from Hyperledger India Meetup) (20:24)
@@ -448,14 +550,11 @@ How do I know I am in Intel SGX Hardware Mode?
 If you set ``SGX_MODE=HW`` in your environment and setup Intel SGX correctly,
 Avalon will startup in Intel SGX Hardware Mode.
 You know you are in Intel SGX Hardware Mode (SGX_MODE=HW) when you see messages
-similar to this in the Avalon Enclave Manager output at startup
-(the SPID and IAS API keys are examples and not active):
+similar to this in the Avalon Enclave Manager output at startup:
 
    .. code:: none
 
-       INFO avalon_enclave_manager.ias_client] IAS settings:
-       INFO avalon_enclave_manager.ias_client] SPID: BA5FDA588B8EA36B203955D38FA6B675
-       INFO avalon_enclave_manager.ias_client] IAS ApiKey: 8730f63c63da49258dd37ecf318997ed
+       INFO avalon_enclave_manager.base_enclave_info] Running in Intel SGX HW mode
 
 
 Videos
@@ -565,7 +664,7 @@ Chain code (CC)
     on a Hyperledger Fabric blockchain using the Fabric ledger as data
 
 Client
-    For Ethereum, it is any blockchain node.  This is not the traditional
+    For Ethereum, it is any blockchain node. This is not the traditional
     meaning as used in client-server architecture.
     To avoid ambiguity, an Avalon client is properly referred to as a
     requester
@@ -579,7 +678,7 @@ DCAP
     to provide their own attestation services for Intel SGX TEEs
 
 Dapp (or ÐApp)
-    Ethereum distributed application.  Uses a smart contract for the back end
+    Ethereum distributed application. Uses a smart contract for the back end
     and usually uses a web browser to execute the front end
 
 DID
@@ -635,6 +734,11 @@ Gas
 Ganache
     A personal blockchain software for Ethereum development
 
+Graphene
+    A Library OS (or "LibOS") that provides an Operating System
+    environment in a userspace library to execute an application.
+    It is used to execute code unmodified in a TEE such as Intel SGX.
+
 Hyperledger
     An open source collaborative effort created to advance
     enterprise blockchain technologies. It is hosted by
@@ -683,6 +787,15 @@ Last lookup tag
     are more matching results that can be retrieved by passing this tag as
     an input parameter to a matching function with "_next" appended to the
     function name
+
+Library OS (LibOS)
+    A LibOS encapsulates the services of an operating system into libraries.
+    This may be done to have a single address space executable or to
+    minimize the Trusted Computing Base (TCB). For Avalon a LibOS allows
+    Avalon workers to execute in a TEE enclave with traditional operating
+    system and library calls. It also allows workers to be implemented
+    in interpretive languages such as Python.
+   
 
 LMDB
     Lightning Memory-mapped Database, which is implemented with

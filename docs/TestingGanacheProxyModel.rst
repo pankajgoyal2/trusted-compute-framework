@@ -94,15 +94,28 @@ To run Ganache with Hyperledger Avalon, follow these steps:
    .. code:: sh
 
        cd $TCF_HOME
-       docker-compose -f docker-compose.yaml -f docker-compose-eth-ganache.yaml up -d --build
+       docker-compose -f docker-compose.yaml -f docker/compose/avalon-eth-ganache.yaml up -d --build
 
-6. Go to the ``avalon-shell`` container to run ``eth_generic_client.py``:
+   To start a worker pool (with one Key Management Enclave and one Work order Processing Enclave):
+
+   .. code:: sh
+
+       docker-compose -f docker-compose.yaml -f docker/compose/avalon-pool.yaml -f docker/compose/avalon-eth-ganache.yaml up -d --build
+
+   To run in Intel SGX hardware mode, use the corresponding docker compose file for singleton or worker pool mode (as specified in `BUILD.md <../BUILD.md>`_).
+
+6. Go to the ``avalon-shell`` container to run ``generic_client.py``:
 
    .. code:: sh
 
        docker exec -it avalon-shell bash
        cd examples/apps/generic_client/
-       ./eth_generic_client.py -b ethereum --workload_id "echo-result" -o --in_data "Hello"
+       ./generic_client.py -b ethereum --workload_id "echo-result" -o --in_data "Hello" \
+           --worker_id "singleton-worker-1"
+
+   NOTE: ``worker_id`` should match with worker id of singleton enclave manager or target worker pool.
+   This ``worker_id`` can either be the command line argument passed in to the enclave manager (Singleton or KME)
+   or in the absence of it, ``worker_id`` in the corresponding config file in `config <../config>`_ directory.
 
 Cleanup
 -------

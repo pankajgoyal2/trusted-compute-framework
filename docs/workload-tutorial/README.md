@@ -62,7 +62,7 @@ Before beginning this tutorial, review the following items:
 
 * Review the base class `WorkloadProcessor`,
   which any workload class inherits, at
-  [$TCF_HOME/common/sgx_workload/workload_processor.h](../../common/sgx_workload/workload/workload_processor.h)
+  [$TCF_HOME/common/sgx_workload/workload/workload_processor.h](../../common/sgx_workload/workload/workload_processor.h)
 
   Observe the following:
   * Each workload must implement method `ProcessWorkOrder()`
@@ -133,6 +133,9 @@ will be created next in [Phase 2](#phase2).
   in file `CMakeLists.txt`
   to an appropriate name, `hello_world` (note the underscore, `_`)
 
+  Make sure the `$WORKLOAD_STATIC_NAME$` is same as workload folder created above using
+  `mkdir -p examples/apps/<workload_name>/workload`
+
 * To include the new workload into the build,
   add this line to the end of
   [$TCF_HOME/examples/apps/CMakeLists.txt](../../examples/apps/CMakeLists.txt) :
@@ -141,27 +144,60 @@ will be created next in [Phase 2](#phase2).
   ADD_SUBDIRECTORY(hello_world/workload)
   ```
 
-* To link the new workload library into the build, add these lines to
-  the end of
-  [$TCF_HOME/tc/sgx/trusted_worker_manager/enclave/CMakeLists.txt](../../tc/sgx/trusted_worker_manager/enclave/CMakeLists.txt) :
+* To link the new workload library into the build, change below lines in
+  [$TCF_HOME/tc/sgx/trusted_worker_manager/enclave/CMakeWorkloads.txt](../../tc/sgx/trusted_worker_manager/enclave/CMakeWorkloads.txt) :
+
+  Add workload to supported workload list
   ```bash
-  # Add $WORKLOAD_STATIC_NAME$ workload
-  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L,${TCF_TOP_DIR}/examples/apps/build/$WORKLOAD_STATIC_NAME$/workload")
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} -Wl,--whole-archive -l$WORKLOAD_STATIC_NAME$ -Wl,--no-whole-archive)
+    MACRO(CREATE_SUPPORTED_WORKLOADS_LIST)
+        ...
+        ...
+        # LIST(SUPPORTED_WORKLOADS_LIST "<workload_id>")
+    ENDMACRO()
   ```
-  Replace `$WORKLOAD_STATIC_NAME$` (two locations)
-  with `hello_world` so it becomes:
+
+  Replace `<workload_id>`  with `hello-world` as shown below:
   ```bash
-  # Add hello_world workload
-  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L,${TCF_TOP_DIR}/examples/apps/build/hello_world/workload")
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} -Wl,--whole-archive -lhello_world -Wl,--no-whole-archive)
+    MACRO(CREATE_SUPPORTED_WORKLOADS_LIST)
+        ...
+        ...
+        LIST(SUPPORTED_WORKLOADS_LIST "hello-world")
+    ENDMACRO()
   ```
-* Update the `workloads` config in `$TCF_HOME/config/singleton_enclave_config.toml` to include the new
-  workload. The work orders matching these workload ids will be processed by the enclave manager. The
-  enclaves should be built with matching workloads. After update, the configuration should look like:
+
+  Add workload static library to supported workload library list
   ```bash
-  workloads = "echo-result,heart-disease-eval,inside-out-eval,simple-wallet,hello_world"
+    MACRO(CREATE_SUPPORTED_WORKLOAD_LIBRARY_LIST)
+        ...
+        ...
+        # LIST(APPEND SUPPORTED_WORKLOAD_LIBRARY_LIST "<workload_lib_name>")
+    ENDMACRO()
   ```
+
+  Replace `<workload_lib_name>`  with `hello_world` as shown below:
+  ```bash
+    MACRO(CREATE_SUPPORTED_WORKLOADS_LIST)
+        ...
+        ...
+        LIST(SUPPORTED_WORKLOADS_LIST "hello_world")
+    ENDMACRO()
+  ```
+
+* Update the `WORKLOADS` build argument in
+  [avalon-pool.yaml](../../docker/compose/avalon-pool.yaml)
+  if running a
+  worker pool setup using Docker. The work order processing enclave (WPE)
+  should be built with workloads the worker pool supports. After updating,
+  the argument should look like:
+  ```bash
+  WORKLOADS=echo-result;heart-disease-eval;inside-out-eval;simple-wallet;hello-world
+  ```
+  You could have any number (one or more) of workloads in this list. This is
+  especially useful when multiple worker pools are running together and there
+  is a workload isolation with each pool running different set of workloads.
+  Refer to
+  [avalon-multi-pool.yaml](../../docker/compose/avalon-multi-pool.yaml)
+  for multiple pools.
 
 * Change to the top-level Avalon source repository directory, `$TCF_HOME`,
   and rebuild the framework (see [$TCF_HOME/BUILD.md](../../BUILD.md)).
@@ -171,7 +207,8 @@ will be created next in [Phase 2](#phase2).
   generic command line utility to test the newly-added workload:
   ```bash
   examples/apps/generic_client/generic_client.py -o \
-      --workload_id "hello-world" --in_data "Dan"
+      --workload_id "hello-world" --in_data "Dan" \
+      --worker_id "kme-worker-1"
 
   ```
 
@@ -182,7 +219,8 @@ will be created next in [Phase 2](#phase2).
 
   examples/apps/generic_client/generic_client.py -o \
       --uri "http://avalon-listener:1947" \
-      --workload_id "hello-world" --in_data "Dan"
+      --workload_id "hello-world" --in_data "Dan" \
+      --worker_id "kme-worker-1"
   ```
 
 
@@ -268,7 +306,8 @@ In this example we name the worker-specific function `ProcessHelloWorld()`.
   newly-added workload:
   ```bash
   examples/apps/generic_client/generic_client.py -o \
-     --workload_id "hello-world" --in_data "Jane" "Dan"
+      --workload_id "hello-world" --in_data "Jane" "Dan" \
+      --worker_id "kme-worker-1"
   ```
 
   If you are running Docker, run the utility from a Docker shell
@@ -278,7 +317,8 @@ In this example we name the worker-specific function `ProcessHelloWorld()`.
 
   examples/apps/generic_client/generic_client.py -o \
       --uri "http://avalon-listener:1947" \
-      --workload_id "hello-world" --in_data "Jane" "Dan"
+      --workload_id "hello-world" --in_data "Jane" "Dan" \
+      --worker_id "kme-worker-1"
   ```
 
 * The Hello World worker should return a string
@@ -453,7 +493,8 @@ to
 
   ```bash
   examples/apps/generic_client/generic_client.py -o \
-     --workload_id "hello-world" --in_data "jack"
+      --workload_id "hello-world" --in_data "jack" \
+      --worker_id "kme-worker-1"
   ```
 
   If you are running Docker, run the utility from the Docker shell
@@ -463,7 +504,8 @@ to
 
   examples/apps/generic_client/generic_client.py -o \
       --uri "http://avalon-listener:1947" \
-      --workload_id "hello-world" --in_data "jack"
+      --workload_id "hello-world" --in_data "jack" \
+      --worker_id "kme-worker-1"
   ```
 
 * The Hello World worker should return the string
@@ -508,7 +550,8 @@ to
   ```bash
   examples/apps/generic_client/generic_client.py -o \
       --workload_id "hello-world" --in_data \
-      "jack:8342EFBE7C379231A4E03C80E5BA1AC9E8ACBC5338976CE6146431D8CBF2318D"
+      "jack:8342EFBE7C379231A4E03C80E5BA1AC9E8ACBC5338976CE6146431D8CBF2318D" \
+      --worker_id "kme-worker-1"
   ```
   For Docker:
   ```bash
@@ -516,7 +559,8 @@ to
   examples/apps/generic_client/generic_client.py -o \
       --uri "http://avalon-listener:1947" \
       --workload_id "hello-world" --in_data \
-      "jack:8342EFBE7C379231A4E03C80E5BA1AC9E8ACBC5338976CE6146431D8CBF2318D"
+      "jack:8342EFBE7C379231A4E03C80E5BA1AC9E8ACBC5338976CE6146431D8CBF2318D" \
+      --worker_id "kme-worker-1"
   ```
 * The Hello World worker should return the string
   `Hello <name>, your result is <count>`

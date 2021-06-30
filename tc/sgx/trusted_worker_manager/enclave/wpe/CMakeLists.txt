@@ -25,6 +25,8 @@ INCLUDE(../CMakeVariables.txt)
 # Set necessary environment needed to build enclave binary
 SET_ENCLAVE_BUILD_ENVIRONMENT()
 
+INCLUDE(../CMakeWorkloads.txt)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 FILE(GLOB PROJECT_HEADERS *.h ../*.h)
@@ -53,10 +55,6 @@ SGX_SIGN_ENCLAVE(${PROJECT_NAME} ${TCF_ENCLAVE_CODE_SIGN_PEM} ${PROJECT_CONFIG})
 
 # Configure CPP linker flags
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/avalon_wpe_enclave.lds")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L,${TCF_TOP_DIR}/examples/apps/build/echo/workload")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L,${TCF_TOP_DIR}/examples/apps/build/heart_disease_eval/workload")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L,${TCF_TOP_DIR}/examples/apps/build/inside_out_demo/workload")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L,${TCF_TOP_DIR}/examples/apps/build/simple_wallet/workload")
 
 # Common workload libraries have to be linked before linking worker specific
 # static libraries
@@ -66,20 +64,22 @@ LINK_ENCLAVE_COMMON_WORKLOAD_LIBRARIES()
 # ADDITIONAL LIBRARIES
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-# Add echo workload
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} -Wl,--whole-archive -lecho_wo -Wl,--no-whole-archive)
-# Add heart disease eval workload
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} -Wl,--whole-archive -lheart_disease_eval -Wl,--no-whole-archive)
-# Add example inside out workload
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} -Wl,--whole-archive -linside_out_eval -Wl,--no-whole-archive)
-# Add simple wallet workload
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} -Wl,--whole-archive -lsimple_wallet -Wl,--no-whole-archive)
+LINK_ENCLAVE_WORKLOAD_LIBRARIES()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 LINK_ENCLAVE_COMMON_LIBRARIES()
 
-#Include common directories and common target directories required by enclave
+# Include common directories and common target directories required by enclave
 INCLUDE_ENCLAVE_COMMON_DIRECTORIES()
 INCLUDE_ENCLAVE_COMMON_TARGET_DIRECTORIES()
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE ${TCF_TOP_DIR}/examples/apps)
+
+# Create wpe_mr_enclave.txt file containing the MRENCLAVE for the WPE Enclave.
+# Place this file in the top directory
+ADD_CUSTOM_COMMAND(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${TCF_TOP_DIR}/scripts/generate_mrenclave.sh ${SIGNED_ENCLAVE} ${TCF_TOP_DIR}/wpe_mr_enclave.txt
+)
+

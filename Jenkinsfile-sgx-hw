@@ -67,10 +67,27 @@ pipeline {
                 sh './scripts/sgx-hw.sh config/singleton_enclave_config.toml'
             }
         }
- 
-        stage('Build Avalon Direct Model Components') {
+
+        stage('Build avalon components') {
             steps {
-                sh 'docker-compose -f ci/docker-compose-direct-model-build.yaml -f ci/docker-compose-direct-model-sgx-build.yaml build'
+                parallel (
+                    "Build Avalon Direct Model Components in SGX-HW mode": {
+                        script {
+                            sh 'docker-compose -f ci/docker-compose-direct-model.yaml -f ci/docker-compose-direct-model-sgx.yaml build'
+                        }
+                    },
+                    "Build Avalon Proxy Model Components": {
+                        script {
+                            sh 'docker-compose -f ci/docker-compose-fabric-proxy-model.yaml build'
+                        }
+                    },
+                    // Disabling temporarily to unblock unrelated PRs
+                    //"Start fabric network": {
+                    //    script {
+                    //        sh './scripts/start_fabric.sh -w ./ -u'
+                    //    }
+                    //}
+                )
             }
         }
  
@@ -79,6 +96,13 @@ pipeline {
                 sh 'INSTALL_TYPE="" ./bin/run_tests -s'
             }
         }
+
+        // Disabling temporarily to unblock unrelated PRs
+        //stage('Run Avalon Fabric proxy Model Tests') {
+        //    steps {
+        //        sh 'INSTALL_TYPE="" ./bin/run_tests -x'
+        //    }
+        //}
 
         stage('Create git archive') {
             steps {
@@ -93,13 +117,21 @@ pipeline {
     }
 
     post {
+        // Disabling temporarily to unblock unrelated PRs
+        //always {
+        //    echo 'Cleaning up fabric network'
+        //    sh './scripts/start_fabric.sh -w ./ -c'
+        //}
         success {
             archiveArtifacts '*.tgz, *.zip'
+            githubNotify context: 'continuous-integration/jenkins/SGX-HW mode', description: 'This commit looks good',  status: 'SUCCESS'
         }
         aborted {
+            githubNotify context: 'continuous-integration/jenkins/SGX-HW mode', description: 'This commit is aborted',  status: 'FAILURE'
             error "Aborted, exiting now"
         }
         failure {
+            githubNotify context: 'continuous-integration/jenkins/SGX-HW mode', description: 'This commit is failed',  status: 'FAILURE'
             error "Failed, exiting now"
         }
     }

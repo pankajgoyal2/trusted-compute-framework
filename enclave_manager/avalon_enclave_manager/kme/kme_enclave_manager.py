@@ -16,17 +16,20 @@
 
 import argparse
 import json
-import random
 import logging
 import os
 import sys
+import random
 
 import avalon_enclave_manager.sgx_work_order_request as work_order_request
 import avalon_enclave_manager.kme.kme_enclave_info as enclave_info
 from avalon_enclave_manager.base_enclave_manager import EnclaveManager
 from listener.base_jrpc_listener import parse_bind_url
 from avalon_enclave_manager.kme.kme_listener import KMEListener
+from error_code.error_status import WorkOrderStatus
 from jsonrpc.exceptions import JSONRPCDispatchException
+from avalon_enclave_manager.enclave_type import EnclaveType
+from utility.jrpc_utility import get_request_json
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,9 @@ class KeyManagementEnclaveManager(EnclaveManager):
                           enclave
         """
         return enclave_info.\
-            KeyManagementEnclaveInfo(self._config["EnclaveModule"])
+            KeyManagementEnclaveInfo(self._config,
+                                     self._worker_id,
+                                     EnclaveType.KME)
 
 # -------------------------------------------------------------------------
 
@@ -77,6 +82,7 @@ class KeyManagementEnclaveManager(EnclaveManager):
         self._worker_kv_delegate.add_new_worker(self._worker_id, worker_info)
 
 # -------------------------------------------------------------------------
+
     def _execute_work_order(self, input_json_str, ext_data=""):
         """
         Submits request to KME and retrieves the response
@@ -91,7 +97,7 @@ class KeyManagementEnclaveManager(EnclaveManager):
         try:
             logger.info("Request sent to enclave %s", input_json_str)
             wo_request = work_order_request.SgxWorkOrderRequest(
-                self._config["EnclaveModule"],
+                EnclaveType.KME,
                 input_json_str,
                 ext_data
             )
@@ -104,6 +110,11 @@ class KeyManagementEnclaveManager(EnclaveManager):
 
         except Exception as e:
             logger.error("failed to execute work order; %s", str(e))
+            wo_response = dict()
+            wo_response["error"] = dict()
+            wo_response["error"]["code"] = WorkOrderStatus.FAILED
+            wo_response["error"]["message"] = str(e)
+            json_response = json.dumps(wo_response, indent=4)
 
         return json_response
 
@@ -145,32 +156,62 @@ class KeyManagementEnclaveManager(EnclaveManager):
             self.RegisterWorkOrderProcessor,
             self.PreProcessWorkOrder
         ]
-        kme_listener = KMEListener(rpc_methods)
-        kme_listener.start(host_name, port)
+        self._kme_listener = KMEListener(rpc_methods)
+        self._kme_listener.start(host_name, port)
 
 
 # -----------------------------------------------------------------
 
     def GetUniqueVerificationKey(self, **params):
         """
-        """
-        wo_request = self._get_request_json("GetUniqueVerificationKey")
-        wo_request["params"] = params
-        wo_response = self._execute_work_order(json.dumps(wo_request), "")
-        wo_response_json = json.loads(wo_response)
+        RPC method registered with the KME listener to generate an
+        unique verification key before a WPE registration.
 
-        if "result" in wo_response_json:
-            return wo_response_json["result"]
-        else:
-            logger.error("Could not get UniqueVerificationKey")
-            return wo_response_json
+        Parameters :
+            @param params - variable-length argument list
+        Returns :
+            @returns response - A jrpc response
+        """
+        try:
+            wo_request = get_request_json("GetUniqueVerificationKey",
+                                          random.randint(0, 100000))
+            wo_request["params"] = params
+            wo_response = self._execute_work_order(json.dumps(wo_request), "")
+            wo_response_json = json.loads(wo_response)
+
+            data = {
+                "workOrderId": wo_request["params"]["workOrderId"]
+            }
+
+            if "result" in wo_response_json:
+                return wo_response_json["result"]
+            else:
+                logger.error("Could not get UniqueVerificationKey - %s",
+                             wo_response_json)
+                # For all negative cases, response should have an error field.
+                # Hence constructing JSONRPC error response with
+                # error code and message mapped to KME enclave response
+                err_code = wo_response_json["error"]["code"]
+                err_msg = wo_response_json["error"]["message"]
+                raise JSONRPCDispatchException(err_code, err_msg, data)
+        except Exception as e:
+            raise JSONRPCDispatchException(
+                WorkOrderStatus.FAILED, str(e), data)
 
 # -----------------------------------------------------------------
 
     def RegisterWorkOrderProcessor(self, **params):
         """
+        RPC method registered with the KME listener to register a WPE
+        with a KME.
+
+        Parameters :
+            @param params - variable-length argument list
+        Returns :
+            @returns response - A jrpc response
         """
-        wo_request = self._get_request_json("RegisterWorkOrderProcessor")
+        wo_request = get_request_json("RegisterWorkOrderProcessor",
+                                      random.randint(0, 100000))
         wo_request["params"] = params
         wo_response = self._execute_work_order(json.dumps(wo_request), "")
         wo_response_json = json.loads(wo_response)
@@ -185,8 +226,16 @@ class KeyManagementEnclaveManager(EnclaveManager):
 
     def PreProcessWorkOrder(self, **params):
         """
+        RPC method registered with the KME listener to pre-process a
+        work order request.
+
+        Parameters :
+            @param params - variable-length argument list
+        Returns :
+            @returns response - A jrpc response
         """
-        wo_request = self._get_request_json("PreProcessWorkOrder")
+        wo_request = get_request_json("PreProcessWorkOrder",
+                                      random.randint(0, 100000))
         wo_request["params"] = params
         wo_response = self._execute_work_order(json.dumps(wo_request), "")
         wo_response_json = json.loads(wo_response)
@@ -204,24 +253,6 @@ class KeyManagementEnclaveManager(EnclaveManager):
                 "workOrderId": wo_response_json["error"]["data"]["workOrderId"]
             }
             raise JSONRPCDispatchException(err_code, err_msg, data)
-
-
-# -----------------------------------------------------------------
-
-    def _get_request_json(self, method):
-        """
-        Helper method to synthesize jrpc request JSON
-
-        Parameters :
-            @param method - JRPC method to be set in the method field
-        Returns :
-            @returns A dict representing the basic request JSON
-        """
-        return {
-            "jsonrpc": "2.0",
-            "method": method,
-            "id": random.randint(0, 100000)
-        }
 
 # -----------------------------------------------------------------
 
@@ -243,6 +274,10 @@ def main(args=None):
                         type=str)
     parser.add_argument("--worker_id",
                         help="Id of worker in plain text", type=str)
+    parser.add_argument(
+        "--wpe-mrenclave",
+        help="MRENCLAVE of WPE that can register with this KME",
+        type=str)
 
     (options, remainder) = parser.parse_known_args(args)
 
@@ -263,6 +298,8 @@ def main(args=None):
         config["KMEListener"]["bind"] = options.bind
     if options.worker_id:
         config["WorkerConfig"]["worker_id"] = options.worker_id
+    if options.wpe_mrenclave:
+        config["EnclaveModule"]["wpe_mrenclave"] = options.wpe_mrenclave
 
     plogger.setup_loggers(config.get("Logging", {}))
     sys.stdout = plogger.stream_to_logger(

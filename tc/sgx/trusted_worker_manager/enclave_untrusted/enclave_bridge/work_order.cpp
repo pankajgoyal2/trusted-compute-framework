@@ -20,11 +20,11 @@
 #include "avalon_sgx_error.h"
 #include "log.h"
 #include "types.h"
-#include "enclave_types.h"
 
 #include "enclave.h"
 #include "base.h"
 #include "work_order.h"
+#include "sgx_utility.h"
 
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 /*
@@ -58,8 +58,7 @@ tcf_err_t WorkOrderHandler::HandleWorkOrderRequest(
         sgx_enclave_id_t enclaveid = g_Enclave[enclaveIndex].GetEnclaveId();
 
         tcf_err_t presult = TCF_SUCCESS;
-        sgx_status_t sresult =
-            g_Enclave[enclaveIndex].CallSgx(
+        sgx_status_t sresult = tcf::sgx_util::CallSgx(
                 [
                     this,
                     enclaveid,
@@ -125,9 +124,7 @@ tcf_err_t WorkOrderHandler::GetSerializedResponse(
         sgx_enclave_id_t enclaveid = g_Enclave[enclaveIndex].GetEnclaveId();
 
         tcf_err_t presult = TCF_SUCCESS;
-        sgx_status_t sresult =
-
-            g_Enclave[enclaveIndex].CallSgx(
+        sgx_status_t sresult = tcf::sgx_util::CallSgx(
                 [
                     this,
                     enclaveid,

@@ -34,13 +34,12 @@ from PIL import ImageTk, Image
 
 # Avalon imports
 import avalon_crypto_utils.crypto_utility as utility
-import avalon_sdk.worker.worker_details as worker
-from avalon_sdk.worker.worker_details import WorkerType
+from avalon_sdk.worker.worker_details import WorkerType, SGXWorkerDetails
 from avalon_sdk.work_order.work_order_params import WorkOrderParams
 from avalon_sdk.connector.direct.avalon_direct_client import AvalonDirectClient
 import config.config as pconfig
 import utility.logger as plogger
-import avalon_crypto_utils.crypto.crypto as crypto
+import utility.hex_utils as hex_utils
 from error_code.error_status import WorkOrderStatus, ReceiptCreateStatus
 import avalon_crypto_utils.signature as signature
 from error_code.error_status import SignatureStatus
@@ -301,7 +300,8 @@ class resultWindow(tk.Toplevel):
         requester_nonce = secrets.token_hex(16)
         work_order_id = secrets.token_hex(32)
         requester_id = secrets.token_hex(32)
-        wo_params = WorkOrderParams(
+        wo_params = WorkOrderParams()
+        wo_params.create_request(
             work_order_id, worker_id, workload_id, requester_id,
             session_key, session_iv, requester_nonce,
             result_uri=" ", notify_uri=" ",
@@ -638,9 +638,14 @@ def parse_command_line(args):
         "-o", "--off-chain",
         help="skip URI lookup and use the registry in the config file",
         action="store_true")
-    parser.add_argument(
-        "-w", "--worker-id",
-        help="skip worker lookup and retrieve specified worker",
+    optional_worker_id = parser.add_mutually_exclusive_group()
+    optional_worker_id.add_argument(
+        "-w", "--worker_id",
+        help="skip worker lookup and retrieve specified worker (plain text)",
+        type=str)
+    optional_worker_id.add_argument(
+        "-wx", "--worker_id_hex",
+        help="skip worker lookup and retrieve specified worker (hex string)",
         type=str)
     parser.add_argument(
         "-v", "--verbose",
@@ -678,20 +683,22 @@ def parse_command_line(args):
             options.registry_list
 
     if options.service_uri:
-        service_uri = options.service_uri
         off_chain = True
 
     if options.off_chain:
-        service_uri = config["tcf"].get("json_rpc_uri")
         off_chain = True
 
     requester_signature = options.requester_signature
 
     verbose = options.verbose
     worker_id = options.worker_id
+    worker_id_hex = options.worker_id_hex
+
+    worker_id = worker_id_hex if not worker_id \
+        else hex_utils.get_worker_id_from_name(worker_id)
 
     # Initializing Worker Object
-    worker_obj = worker.SGXWorkerDetails()
+    worker_obj = SGXWorkerDetails()
 
 
 def initialize_logging(config):

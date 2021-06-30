@@ -27,6 +27,8 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
+        - IMAGE=$IMAGE
+        - DISTRO=$DISTRO
     environment:
       - DISPLAY
       - http_proxy
@@ -54,6 +56,8 @@ services:
         - https_proxy
         - no_proxy
         - ENCLAVE_TYPE=singleton
+        - DISTRO=$DISTRO
+        - IMAGE=$IMAGE
     environment:
       - http_proxy
       - https_proxy
@@ -61,8 +65,12 @@ services:
     expose:
       # ZMQ socket port.
       - 5555
+    volumes:
+      # Persistent volume to store sealed data across restarts
+      - ./.sealed:/project/avalon/.sealed
     command: |
       bash -c "
+        if [ -v CLEAN_SEALED_DATA ] && [ $CLEAN_SEALED_DATA = 1 ]; then rm -f /project/avalon/.sealed/.sealed.data*; fi;
         enclave_manager --lmdb_url http://avalon-lmdb:9090
         tail -f /dev/null
       "
@@ -79,6 +87,8 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
+        - DISTRO=$DISTRO
+        - IMAGE=$IMAGE
     environment:
       - http_proxy
       - https_proxy
@@ -103,6 +113,8 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
+        - DISTRO=$DISTRO
+        - IMAGE=$IMAGE
     environment:
       - http_proxy
       - https_proxy

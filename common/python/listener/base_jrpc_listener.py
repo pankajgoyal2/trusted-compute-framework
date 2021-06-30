@@ -27,18 +27,17 @@
 import os
 import sys
 import json
+import logging
 
 from urllib.parse import urlsplit
 from twisted.web import server, resource, http
 from twisted.internet import reactor, error as reactor_error
-from error_code.error_status import JRPCErrorCodes
-import utility.jrpc_utility as jrpc_utility
-
-
 from jsonrpc.dispatcher import Dispatcher
 from jsonrpc import JSONRPCResponseManager
+from error_code.error_status import JRPCErrorCodes
 
-import logging
+import utility.jrpc_utility as jrpc_utility
+
 logger = logging.getLogger(__name__)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -83,10 +82,15 @@ class BaseJRPCListener(resource.Resource):
 
         try:
             input_json = json.loads(input_json_str)
+            if not ("id" in input_json.keys()) or \
+               not ("method" in input_json.keys()) or \
+               not (input_json["jsonrpc"] == "2.0"):
+                raise KeyError("Improper id or jsonrpc or method")
+
             logger.info("Received request: %s", input_json['method'])
         except Exception as err:
-            logger.error("exception loading Json: %s", str(err))
-            response["error"]["message"] = "Improper Json request"
+            logger.error("Exception while processing Json: %s", str(err))
+            response["error"]["message"] = "{}".format(str(err))
             return response
 
         # save the full json for WorkOrderSubmit
@@ -132,21 +136,12 @@ class BaseJRPCListener(resource.Resource):
             # process the message encoding
             encoding = request.getHeader('Content-Type')
             data = request.content.read()
-            if encoding == 'application/json':
-
-                try:
-                    input_json_str = data.decode('utf-8')
-                    input_json = json.loads(input_json_str)
-                    jrpc_id = input_json["id"]
-                    response = self._process_request(input_json_str)
-
-                except AttributeError:
-                    logger.error("Error while loading input json")
-                    response = jrpc_utility.create_error_response(
-                        JRPCErrorCodes.UNKNOWN_ERROR,
-                        jrpc_id,
-                        "UNKNOWN_ERROR: Error while loading input JSON file")
-                    return response
+            # To support curl command content type
+            # 'application/x-www-form-urlencoded' required
+            if encoding in ['application/json',
+                            'application/x-www-form-urlencoded']:
+                input_json_str = data.decode('utf-8')
+                response = self._process_request(input_json_str)
 
             else:
                 # JRPC response with 0 as id is returned because id can't be
@@ -171,7 +166,8 @@ class BaseJRPCListener(resource.Resource):
 
         # send back the results
         try:
-            if encoding == 'application/json':
+            if encoding in ['application/json',
+                            'application/x-www-form-urlencoded']:
                 response = json.dumps(response)
             logger.info('response[%s]: %s', encoding, response)
             request.setHeader('content-type', encoding)

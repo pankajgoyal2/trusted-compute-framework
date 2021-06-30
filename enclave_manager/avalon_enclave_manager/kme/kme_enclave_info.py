@@ -15,13 +15,13 @@
 import os
 import json
 import time
-import random
 import logging
 
 from ssl import SSLError
 from requests.exceptions import Timeout
 from requests.exceptions import HTTPError
-import avalon_crypto_utils.keys as keys
+import utility.hex_utils as hex_utils
+import utility.file_utils as file_utils
 import avalon_enclave_manager.kme.kme_enclave as enclave
 from avalon_enclave_manager.base_enclave_info import BaseEnclaveInfo
 
@@ -35,19 +35,15 @@ class KeyManagementEnclaveInfo(BaseEnclaveInfo):
     """
 
     # -------------------------------------------------------
-    def __init__(self, config):
+    def __init__(self, config, worker_id, enlcave_type):
 
-        # Initialize the keys that can be used later to
-        # register the enclave
-        self._config = config
         enclave._SetLogger(logger)
-        super(KeyManagementEnclaveInfo, self).__init__(
-            enclave.is_sgx_simulator())
+        super().__init__(config, enlcave_type)
 
-        self._initialize_enclave(config)
-        enclave_info = self._create_enclave_signup_data(config)
+        self._worker_id = worker_id
+        self._initialize_enclave()
+        enclave_info = self._create_enclave_signup_data()
         try:
-            self.ias_nonce = enclave_info['ias_nonce']
             self.sealed_data = enclave_info['sealed_data']
             self.verifying_key = enclave_info['verifying_key']
             self.encryption_key = enclave_info['encryption_key']
@@ -55,33 +51,28 @@ class KeyManagementEnclaveInfo(BaseEnclaveInfo):
                 enclave_info['encryption_key_signature']
             self.proof_data = enclave_info['proof_data']
             self.enclave_id = enclave_info['enclave_id']
+            self.extended_measurements = self.get_extended_measurements()
         except KeyError as ke:
             raise Exception("missing enclave initialization parameter; {}"
                             .format(str(ke)))
 
-        self.enclave_keys = \
-            keys.EnclaveKeys(self.verifying_key, self.encryption_key)
-
     # -------------------------------------------------------
 
-    def _create_enclave_signup_data(self, config):
+    def _create_enclave_signup_data(self):
         """
         Create enclave signup data
-        Parameters :
-            @param config - A dictionary of configurations
+
         Returns :
             @returns enclave_info - A dictionary of enclave data
         """
 
-        ias_nonce = '{0:032X}'.format(random.getrandbits(128))
         try:
-            enclave_data = self._create_signup_info(ias_nonce, config)
+            enclave_data = self._create_signup_info()
         except Exception as err:
             raise Exception('failed to create enclave signup data; {}'
                             .format(str(err)))
 
         enclave_info = dict()
-        enclave_info['ias_nonce'] = ias_nonce
         enclave_info['sealed_data'] = enclave_data.sealed_signup_data
         enclave_info['verifying_key'] = enclave_data.verifying_key
         enclave_info['encryption_key'] = enclave_data.encryption_key
@@ -89,41 +80,39 @@ class KeyManagementEnclaveInfo(BaseEnclaveInfo):
             enclave_data.encryption_key_signature
         enclave_info['enclave_id'] = enclave_data.verifying_key
         enclave_info['proof_data'] = ''
-        if not enclave.is_sgx_simulator():
+        if not self.is_sgx_simulator():
             enclave_info['proof_data'] = enclave_data.proof_data
 
         return enclave_info
 
     # -----------------------------------------------------------------
 
-    def _create_signup_info(self, ias_nonce, config):
+    def _create_signup_info(self):
         """
         Create enclave signup data
 
-        Parameters :
-            @param ias_nonce - Used in IAS request to verify attestation
-                               as a distinguishing factor
-            @param config - A dictionary of configurations
         Returns :
             @returns signup_info_obj - Signup info data
         """
 
-        # Part of what is returned with the signup data is an enclave quote, we
-        # want to update the revocation list first.
-        self._update_sig_rl()
-        # Now, let the enclave create the signup data
-
         signup_cpp_obj = enclave.SignupInfoKME()
 
+        if "wpe_mrenclave" in self._config:
+            self._wpe_mrenclave = self._config["wpe_mrenclave"]
+        else:
+            tcf_home = os.environ.get("TCF_HOME", '../../../')
+            self._wpe_mrenclave = hex_utils.mrenclave_hex_string(
+                tcf_home + "/"
+                + self._config["wpe_mrenclave_read_from_file"])
+
         # @TODO : Passing in_ext_data_signature as empty string "" as of now
-        signup_data = signup_cpp_obj.CreateEnclaveData(
-            config['wpe_mrenclave'], "")
-        logger.info("WPE MRenclave value {}".format(config['wpe_mrenclave']))
+        signup_data = signup_cpp_obj.CreateEnclaveData(self._wpe_mrenclave, "")
+        logger.info("WPE MRenclave value {}".format(self._wpe_mrenclave))
         if signup_data is None:
             return None
 
         signup_info = self._get_signup_info(
-            signup_data, signup_cpp_obj, ias_nonce)
+            signup_data, signup_cpp_obj)
 
         # Now we can finally serialize the signup info and create a
         # corresponding signup info object. Because we don't want the
@@ -132,6 +121,10 @@ class KeyManagementEnclaveInfo(BaseEnclaveInfo):
             json.dumps(signup_info))
         signup_info_obj.sealed_signup_data = \
             signup_data['sealed_enclave_data']
+        file_utils.write_to_file(signup_info_obj.sealed_signup_data,
+                                 self._get_sealed_data_file_name(
+                                     self._config["sealed_data_path"],
+                                     self._worker_id))
         # Now we can return the real object
         return signup_info_obj
 
@@ -164,21 +157,25 @@ class KeyManagementEnclaveInfo(BaseEnclaveInfo):
         """
         return signup_cpp_obj.VerifyEnclaveInfo(enclave_info,
                                                 mr_enclave,
-                                                self._config["wpe_mrenclave"])
+                                                self._wpe_mrenclave)
 
     # ----------------------------------------------------------------
-    def _init_enclave_with(self, signed_enclave, config):
+    def _init_enclave_with(self, signed_enclave):
         """
         Initialize and return tcf_enclave_info that holds details about
         the KME enclave
 
         Parameters :
             @param signed_enclave - The enclave binary read from filesystem
-            @param config - A dictionary of configurations
         Returns :
             @returns tcf_enclave_info - An instance of the tcf_enclave_info
         """
-        return enclave.tcf_enclave_info(
-            signed_enclave, config['spid'], int(config['num_of_enclaves']))
+        # Get sealed data if persisted from previous startup.
+        persisted_sealed_data = file_utils.read_file(
+            self._get_sealed_data_file_name(self._config["sealed_data_path"],
+                                            self._worker_id))
+        return self._attestation.init_enclave_info(
+            signed_enclave, persisted_sealed_data,
+            int(self._config['num_of_enclaves']))
 
     # -----------------------------------------------------------------

@@ -110,7 +110,8 @@ void KMEWorkloadProcessor::Register(
       {
        "unique_id": <unique_id>,
        "proof_data": <proof_data>,
-       "wpe_encryption_key": <wpe_encryption_key>
+       "wpe_encryption_key": <wpe_encryption_key>,
+       "mr_enclave": <mr_enclave>
       }
     */
     // Parse the work order request
@@ -155,11 +156,21 @@ void KMEWorkloadProcessor::Register(
                         "Extracting wpe_encryption_key from params failed");
     }
     std::string wpe_encryption_key(s_value);
+
+    /* Get mr_enclave from params */
+    s_value = json_object_dotget_string(request_object, "mr_enclave");
+    if (s_value == nullptr) {
+        this->SetStatus((int)ERR_WPE_REG_FAILED,
+            out_work_order_data);
+        ThrowIf<ValueError>(true,
+                        "Extracting mr_enclave from params failed");
+    }
+    std::string mr_enclave(s_value);
  
     ByteArray unique_id_bytes = StrToByteArray(unique_id);
     ByteArray e_key = {};
     ByteArray verification_key_hash = {};
-    ByteArray mr_enclave = {};
+    ByteArray mr_enclave_bytes = {};
     ByteArray mr_signer = {};
 
     tcf::error::ThrowIf<tcf::error::WorkloadError>(
@@ -171,7 +182,7 @@ void KMEWorkloadProcessor::Register(
         int err = ext_work_order_info_kme->VerifyAttestationWpe(
 	    StrToByteArray(proof_data),
             unique_id_bytes,
-            mr_enclave, mr_signer,
+            mr_enclave_bytes, mr_signer,
             e_key, verification_key_hash);
         if (err != 0) {
             this->SetStatus(err, out_work_order_data);
@@ -181,49 +192,55 @@ void KMEWorkloadProcessor::Register(
     auto search = sig_key_map.find(unique_id_bytes);
 
     if (search != sig_key_map.end()) {
-        if (this->isSgxSimulator()) {
-        /// Add the WPE to the sig_key_map
-        wpe_enc_key_map[StrToByteArray(wpe_encryption_key)] = WPEInfo(
-            sig_key_map[unique_id_bytes]);
 
-        /// Remove the entry to avoid replay attack
-        sig_key_map.erase(unique_id_bytes);
+        // If this is simulator mode, mr_enclave_bytes should not be
+        // populated yet. Read the mr_enclave received as a parameter
+        // in this WPE registration request and populate it.
+        if (this->isSgxSimulator())
+            mr_enclave_bytes = HexEncodedStringToByteArray(mr_enclave);
+
+        // Compare MRENCLAVE value
+        EnclaveData* enclaveData = EnclaveData::getInstance();
+        ByteArray ext_data = enclaveData->get_extended_data();
+        if (memcmp(ext_data.data(),
+		        mr_enclave_bytes.data(), SGX_HASH_SIZE) != 0) {
+            this->SetStatus((int)ERR_MRENCLAVE_NOT_MATCH, out_work_order_data);
+            ThrowIf<ValueError>(true, "WPE MRENCLAVE value didn't match");
+        }
+
+        if (this->isSgxSimulator()) {
+            /// Add the WPE to the sig_key_map
+            wpe_enc_key_map[StrToByteArray(wpe_encryption_key)] = WPEInfo(
+                sig_key_map[unique_id_bytes]);
+
+            /// Remove the entry to avoid replay attack
+            sig_key_map.erase(unique_id_bytes);
             this->SetStatus((int)ERR_WPE_REG_SUCCESS,
                 out_work_order_data);
             return;
         }
-        /// Compare MRENCLAVE value
-	// Checks are disabled until we have automated way
-	// to calculate the MR enclave of WPE
-        /* EnclaveData* enclaveData = EnclaveData::getInstance();
-        ByteArray ext_data = enclaveData->get_extended_data();
-        if (memcmp(ext_data.data(),
-		mr_enclave.data(),SGX_HASH_SIZE) != 0) {
-            this->SetStatus((int)ERR_MRENCLAVE_NOT_MATCH,
-                out_work_order_data);
-            ThrowIf<ValueError>(true, "WPE MRENCLAVE value didn't match");
-        } */
-	// Verify the hash of verification key in the report data and
-	// unique_id in in_data
-	uint8_t unique_id_hash[SGX_HASH_SIZE] = {0};
-	ComputeSHA256Hash(unique_id.c_str(), unique_id_hash);
-	if (memcmp(
-	    verification_key_hash.data(), unique_id_hash, SGX_HASH_SIZE) != 0) {
-            this->SetStatus((int)ERR_UNIQUE_ID_NOT_MATCH,
-                out_work_order_data);
-            ThrowIf<ValueError>(true, "Unique id value didn't match");
-	}
 
-	// Compare if SHA256(wpe_encryption_key) matches
-	// with WPE report data [0:31]
-	uint8_t encryption_key_hash[SGX_HASH_SIZE] = {0};
-	ComputeSHA256Hash(wpe_encryption_key.c_str(), encryption_key_hash);
-	if (memcmp(
-	    e_key.data(), encryption_key_hash, SGX_HASH_SIZE) != 0) {
+        // Verify the hash of verification key in the report data and
+        // unique_id in in_data
+        uint8_t unique_id_hash[SGX_HASH_SIZE] = {0};
+        ComputeSHA256Hash(unique_id.c_str(), unique_id_hash);
+        if (verification_key_hash != ByteArray(std::begin(unique_id_hash),
+                                               std::end(unique_id_hash))){
+
+            this->SetStatus((int)ERR_UNIQUE_ID_NOT_MATCH, out_work_order_data);
+            ThrowIf<ValueError>(true, "Unique id value didn't match");
+        }
+
+        // Compare if SHA256(wpe_encryption_key) matches
+        // with WPE report data [0:31]
+        uint8_t encryption_key_hash[SGX_HASH_SIZE] = {0};
+        ComputeSHA256Hash(wpe_encryption_key.c_str(), encryption_key_hash);
+        if (memcmp(e_key.data(), encryption_key_hash,
+                SGX_HASH_SIZE) != 0) {
             this->SetStatus((int)ERR_ENCRYPTION_KEY_NOT_MATCH,
                 out_work_order_data);
-            ThrowIf<ValueError>(true, "Unique id value didn't match");
-	}
+            ThrowIf<ValueError>(true, "Encryption key hash didn't match");
+        }
         // TODO: MRSIGNER value check
 
         /// Add the WPE to the sig_key_map
@@ -234,12 +251,10 @@ void KMEWorkloadProcessor::Register(
         sig_key_map.erase(unique_id_bytes);
     }
     else {
-        this->SetStatus((int)ERR_WPE_KEY_NOT_FOUND,
-            out_work_order_data);
+        this->SetStatus((int)ERR_WPE_KEY_NOT_FOUND, out_work_order_data);
         ThrowIf<ValueError>(true, "WPE verification key not found");
     }
-    this->SetStatus((int)ERR_WPE_REG_SUCCESS,
-        out_work_order_data);
+    this->SetStatus((int)ERR_WPE_REG_SUCCESS, out_work_order_data);
 }  // KMEWorkloadProcessor::Register
 
 

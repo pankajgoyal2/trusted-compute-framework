@@ -14,9 +14,9 @@ If you have not done so already, clone the Avalon source repository.
 Choose whether you want the stable version (recommended) or the most recent
 version
 
-- To use the current stable branch (recommended), run this command:
+- To use the current stable release (recommended), run this command:
   ```bash
-  git clone https://github.com/hyperledger/avalon --branch pre-release-v0.5
+  git clone https://github.com/hyperledger/avalon -b pre-release-v0.6
   ```
 
 - Or, to use the latest branch, run this command:
@@ -38,6 +38,9 @@ We recommend the Docker-based build since it is automated and requires fewer ste
     - [Static Analysis](#staticanalysis)
     - [Troubleshooting](#troubleshooting)
     - [Troubleshooting: Standalone Build](#troubleshootingstandalone)
+- [Avalon on CentOS 8.2](#avaloncentos8)
+    - [SGX driver and PSW package installation](#sgxinstall)
+    - [Run Avalon](#runavalon)
 
 # <a name="dockerbuild"></a>Docker-based Build and Execution
 Follow the instructions below to execute a Docker-based build and execution.
@@ -54,7 +57,7 @@ Follow the instructions below to execute a Docker-based build and execution.
       ```
       To start a worker pool (with one Key Management Enclave and one Work order Processing Enclave):
       ```bash
-      sudo docker-compose -f docker-compose.yaml -f docker-compose-pool.yaml up --build
+      sudo docker-compose -f docker-compose.yaml -f docker/compose/avalon-pool.yaml up --build
       ```
    2. For subsequent runs on the same workspace, if you changed a
       source or configuration file, run the above command again
@@ -65,7 +68,7 @@ Follow the instructions below to execute a Docker-based build and execution.
       ```
       For worker pool, run:
       ```bash
-      MAKECLEAN=0 sudo docker-compose -f docker-compose.yaml -f docker-compose-pool.yaml up
+      MAKECLEAN=0 sudo docker-compose -f docker-compose.yaml -f docker/compose/avalon-pool.yaml up
       ```
 
    **SGX Hardware mode (for hosts with Intel SGX)**:
@@ -78,8 +81,8 @@ Follow the instructions below to execute a Docker-based build and execution.
       ```
       For worker pool, run:
       ```bash
-      sudo docker-compose -f docker-compose.yaml -f docker-compose-pool.yaml \
-      -f docker-compose-pool-sgx.yaml up --build
+      sudo docker-compose -f docker-compose.yaml -f docker/compose/avalon-pool.yaml \
+      -f docker/compose/avalon-pool-sgx.yaml up --build
       ```
    3. For subsequent runs on the same workspace, if you changed a
       source or configuration file, run the above command again
@@ -90,8 +93,8 @@ Follow the instructions below to execute a Docker-based build and execution.
       ```
       For worker pool, run:
       ```bash
-      MAKECLEAN=0 sudo docker-compose -f docker-compose.yaml -f docker-compose-pool.yaml \
-      -f docker-compose-pool-sgx.yaml up
+      MAKECLEAN=0 sudo docker-compose -f docker-compose.yaml -f docker/compose/avalon-pool.yaml \
+      -f docker/compose/avalon-pool-sgx.yaml up
       ```
 3. On a successful run, you should see the message `BUILD SUCCESS`
    followed by a repetitive message `Enclave manager sleeping for 10 secs`
@@ -102,6 +105,20 @@ Follow the instructions below to execute a Docker-based build and execution.
 5. To execute test cases refer to [Testing](#testing) section below
 6. To exit the Avalon program, press `Ctrl-c`
 
+**Running multiple worker pools together**
+
+To run multiple worker pools together, make use of sample docker compose file `avalon-multi-pool.yaml` instead of `avalon-pool.yaml`. It also has a corresponding docker compose file `avalon-multi-pool-sgx.yaml` for running in Intel SGX hardware mode. This setup starts two pools of workers with the composition:
+   1. worker-pool-1 - One KME (Key Management Enclave), One WPE (Work order Processing Enclave) supporting `heart-disease-eval` workload
+   2. worker-pool-2 - One KME, two WPE supporting `echo-result` workload
+
+These docker compose files can be further customized to run multiple worker pools in a single Avalon setup. Points to note when customizing/running multiple pools together using docker:
+   1. Name of the docker image for all WPE in a pool should be same as pools are homogeneous as of now
+   2. All WPE in a pool should connect to same KME using command line arguments `--kme_listener_url` and `--worker_id`
+   3. When submitting work orders using any of the sample client applications, `--worker_id` argument needs to be mentioned explicitly to choose one of the workers in the system (Note : Each pool represents a single worker). For example:
+   ```bash
+   ./generic_client.py -o --uri "http://avalon-listener:1947" \
+      --workload_id "echo-result" --in_data "Hello" --worker_id worker-pool-2
+   ```
 
 # <a name="standalonebuild"></a>Standalone Build
 ## <a name="prerequisites"></a>Standalone: Prerequisites
@@ -155,35 +172,14 @@ The steps below will set up a Python virtual environment to run Avalon.
    ias_api_key = '<ias subscription key obtained from portal>'
    ```
 
-6. If you are not behind a corporate proxy (the usual case),
-   then skip this step and go to the next step.
-
-   If you are behind a corporate proxy, then in file
-   `$TCF_HOME/config/tcs_config.toml` uncomment and update the
-   `https_proxy` line:
-
-   ```
-   #https_proxy = "http://your-proxy:your-port/"
-   ```
-
-   If you are behind a proxy and also using Intel SGX hardware
-   (`SGX_MODE=HW`), add the following to your `/etc/aesmd.conf` file
-   and update the `aesm proxy` line:
-
-   ```
-   proxy type = manual
-   aesm proxy = http://your-proxy:your-port/
-   ```
-
-
-7. Create a Python virtual environment:
+6. Create a Python virtual environment:
 
    ```bash
    cd $TCF_HOME/tools/build
    python3 -m venv _dev
    ```
 
-8. Activate the new Python virtual environment for the current shell session.
+7. Activate the new Python virtual environment for the current shell session.
    You will need to do this in each new shell session (in addition to
    exporting environment variables).
    ```bash
@@ -193,13 +189,13 @@ The steps below will set up a Python virtual environment to run Avalon.
    If the virtual environment for the current shell session is activated,
    you will the see this prompt: `(_dev)`
 
-9. Install PIP3 packages into your Python virtual environment:
+8. Install PIP3 packages into your Python virtual environment:
 
    ```bash
-   pip3 install --upgrade setuptools json-rpc py-solc-x web3 colorlog twisted wheel toml pyzmq pycryptodomex ecdsa
+   pip3 install --upgrade setuptools json-rpc py-solc-x web3 colorlog twisted wheel toml pyzmq pycryptodomex ecdsa jsonschema
    ```
 
-10. Build Avalon components:
+9. Build Avalon components:
 
     ```bash
     make clean
@@ -302,3 +298,35 @@ Module names can be found [here](bin/run_lint#L205) in the codebase.
   then you need to set `LD_LIBRARY_PATH` with:
   `source /opt/intel/sgxsdk/environment` .
   For details, see [PREREQUISITES](PREREQUISITES.md)
+
+# <a name="avaloncentos8"></a>Run Avalon on CentOS 8.2
+## <a name="sgxinstall"></a>SGX driver and PSW package installation
+1. Install SGX drivers
+   ```
+   cd /tmp
+   sudo yum update
+   sudo yum install kernel-devel gcc
+   wget https://download.01.org/intel-sgx/sgx-linux/2.10/distro/centos8.1-server/sgx_linux_x64_driver_2.6.0_602374c.bin
+   chmod +x sgx_linux_x64_driver_2.6.0_602374c.bin
+   sudo ./sgx_linux_x64_driver_2.6.0_602374c.bin
+   
+   You should be able to see /dev/isgx device mapping on your host.
+   ```
+2. Install SGX PSW package
+   ```
+   cd /tmp
+   wget https://download.01.org/intel-sgx/sgx-linux/2.10/distro/centos8.1-server/sgx_rpm_local_repo.tgz
+   tar -xvf sgx_rpm_local_repo.tgz
+   sudo yum-config-manager --add-repo file:///tmp/sgx_rpm_local_repo
+   sudo yum --nogpgcheck install -y libsgx-launch libsgx-epid libsgx-quote-ex libsgx-urts
+   
+   You can check the aesm service should be up and running:
+     sudo systemctl status aesmd.service
+   ```
+
+## <a name="runavalon"></a>Run Avalon
+This section describes how to run Avalon on CentOS 8.2 host in docker mode.
+Prepare a host with CentOS 8.2 and install docker, docker-compose on it. Clone the hyperledger/avalon repository and go to
+avalon directory. Change the parameter DISTRO to `centos` and IMAGE to `centos:centos8` in .env file.
+
+To build and run in direct model and proxy model, you can follow the procedure mentioned at [Docker-based build](#dockerbuild)

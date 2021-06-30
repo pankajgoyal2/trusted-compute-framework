@@ -16,7 +16,8 @@ import json
 import logging
 import importlib
 
-import avalon_crypto_utils.crypto.crypto as crypto
+import avalon_crypto_utils.crypto_utility as crypto
+from avalon_enclave_manager.enclave_type import EnclaveType
 
 logger = logging.getLogger(__name__)
 
@@ -24,23 +25,20 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------
 class SgxWorkOrderRequest(object):
 
-    def __init__(self, config, work_order, ext_data=""):
-        enclave_type = config.get("enclave_type")
-        logger.info("Processing work order request for enclave_type : %s",
-                    enclave_type)
+    def __init__(self, enclave_type, work_order, ext_data=""):
         self.enclave = None
-        if enclave_type == "KME":
+        if enclave_type == EnclaveType.KME:
             self.enclave = importlib.import_module(
                 "avalon_enclave_manager.kme.kme_enclave")
-            self.enclave_type = self.enclave.KME_ENCLAVE
-        elif enclave_type == "WPE":
+        elif enclave_type == EnclaveType.WPE:
             self.enclave = importlib.import_module(
                 "avalon_enclave_manager.wpe.wpe_enclave")
-            self.enclave_type = self.enclave.WPE_ENCLAVE
-        else:
+        elif enclave_type == EnclaveType.SINGLETON:
             self.enclave = importlib.import_module(
                 "avalon_enclave_manager.singleton.singleton_enclave")
-            self.enclave_type = self.enclave.SINGLETON_ENCLAVE
+        else:
+            logger.exception('Unsupported enclave type passed in the config')
+            raise Exception('Unsupported enclave type passed in the config')
         self.work_order = work_order
         self.ext_data = ext_data
 
@@ -51,7 +49,7 @@ class SgxWorkOrderRequest(object):
 
         try:
             encoded_encrypted_response = self.enclave.HandleWorkOrderRequest(
-                encrypted_request, self.ext_data, self.enclave_type)
+                encrypted_request, self.ext_data)
             assert encoded_encrypted_response
         except Exception as err:
             logger.exception('workorder request invocation failed: %s',

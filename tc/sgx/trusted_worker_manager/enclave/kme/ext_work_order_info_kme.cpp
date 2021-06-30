@@ -209,21 +209,14 @@ int ExtWorkOrderInfoKME::VerifyAttestationWpe(
     mr_enclave = mr_enclave_bytes;
     mr_signer = mr_signer_bytes;
 
-    uint8_t v_key_hash[SGX_HASH_SIZE] = {0};
-    uint8_t e_key_hash[SGX_HASH_SIZE] = {0};
-    strncpy((char* )e_key_hash,
-        (const char* )expected_report_data.d,
-        SGX_HASH_SIZE);
-    strncpy((char* )v_key_hash,
-        (const char* )expected_report_data.d + SGX_HASH_SIZE,
-        SGX_HASH_SIZE);
-    verification_key_hash = StrToByteArray((char*)v_key_hash);
-    encryption_public_key_hash = StrToByteArray((char*)e_key_hash);
 
+    encryption_public_key_hash = ByteArray(std::begin(expected_report_data.d),
+                                     std::begin(expected_report_data.d)+SGX_HASH_SIZE);
+    verification_key_hash = ByteArray(std::begin(expected_report_data.d)+SGX_HASH_SIZE,
+                                     std::end(expected_report_data.d));
     return result;
 
 }  // ExtWorkOrderInfoKME::VerifyAttestationWpe
-
 
 int ExtWorkOrderInfoKME::CreateWorkOrderKeyInfo(
     const ByteArray& wpe_encryption_key,
@@ -318,7 +311,7 @@ int ExtWorkOrderInfoKME::CreateWorkOrderKeyInfo(
                     wo_key_info.out_data_keys[i].decrypted_data);
         }
 
-        // Calculate signure of hash of all the encrypted values in this
+        // Calculate signature of hash of all the encrypted values in this
         // work order key info JSON using KME's signing key
         ByteArray wo_key_info_hash = {};
         CalculateWorkOrderKeyInfoHash(wo_key_info, wo_key_info_hash);
@@ -348,11 +341,6 @@ bool ExtWorkOrderInfoKME::CheckAttestationSelf(
     return 0;
 }  // ExtWorkOrderInfoKME::CheckAttestationSelf
 
-/*
- * Calculates hash on the encrypted keys, input-data-keys and output-data-keys
- * @param wo_key_info - Instance of WorkOrderKeyInfo
- * @param wo_key_info_hash [OUT] - Computed hash value
-*/
 void ExtWorkOrderInfoKME::CalculateWorkOrderKeyInfoHash(
     WorkOrderKeyInfo wo_key_info, ByteArray& wo_key_info_hash) {
 
@@ -390,12 +378,6 @@ void ExtWorkOrderInfoKME::CalculateWorkOrderKeyInfoHash(
         StrToByteArray(final_hash_str));
 }  // ExtWorkOrderInfoKME::CalculateWorkOrderKeyInfoHash
 
-/*
- * Creates JSON document of encryption keys, signing keys
- * and data encryption keys
- *
- * @param wo_key_info - Instance of WorkOrderKeyInfo
-*/
 ByteArray ExtWorkOrderInfoKME::CreateJsonWorkOrderKeys(
     WorkOrderKeyInfo wo_key_info) {
 

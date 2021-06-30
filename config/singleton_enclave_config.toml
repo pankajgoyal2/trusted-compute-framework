@@ -45,12 +45,27 @@ zmq_port = '5555'
 # EnclaveModule -- configuration of the Intel SGX Enclave
 # -------------------------------------------------------
 [EnclaveModule]
+# Attestation type
+attestation_type = "EPID"
+
+num_of_enclaves = "1"
+
+# TEE enclave library to use.
+enclave_library = "libavalon-singleton-enclave.signed.so"
+enclave_library_path = "tc/sgx/trusted_worker_manager/enclave/build/lib/"
+
+# Sealed data from trusted enclave is stored at this location for recovery
+# in case of abrubt shutdown.
+sealed_data_path = ".sealed/.sealed.data"
+
+# ------------------------------------------------------------
+# Epid attestation data
+# ------------------------------------------------------------
+[EpidAttestation]
 # Service Provider ID (SPID) is a 32-digit hex string tied to the
 # enclave implementation. Replace dummy SPID with value obtained after
 # subscription to run TCS in Intel SGX HW mode.
 spid = "DEADBEEF00000000DEADBEEF00000000"
-
-num_of_enclaves = "1"
 
 # ias_url is the URL of the Intel Attestation Service (IAS) server.
 ias_url = "https://api.trustedservices.intel.com/sgx/dev"
@@ -64,13 +79,6 @@ ias_url = "https://api.trustedservices.intel.com/sgx/dev"
 # the portal https://api.portal.trustedservices.intel.com/
 ias_api_key = "112233445566778899aabbccddeeff00"
 
-# TEE enclave library to use.
-enclave_library = "libavalon-singleton-enclave.signed.so"
-enclave_library_path = "tc/sgx/trusted_worker_manager/enclave/build/lib/"
-
-# The type of enclave viz - KME/WPE/SWE
-enclave_type = "SWE"
-
 # -------------------------------------------------------------
 # TCS Worker configuration details
 # -------------------------------------------------------------
@@ -79,11 +87,7 @@ enclave_type = "SWE"
 # Id of worker in plain text. This can be overridden by passing values in command line for
 # enclave manager using --worker_id option.
 worker_id = "singleton-worker-1"
-# Supported workloads for this worker. The work orders matching these workload ids
-# will be processed by the enclave manager. The enclaves should be built with matching
-# workloads. This can be overridden by passing values in command line for enclave manager
-# using --workloads option.
-workloads = "echo-result,heart-disease-eval,inside-out-eval,simple-wallet"
+
 ProofDataType = "TEE-SGX-IAS"
 
 # The Following URIs are used in direct model to submit work orders in
@@ -98,9 +102,10 @@ WorkOrderInvocationAddress = ""
 ReceiptInvocationAddress = ""	
 # Ethereum Address used by the worker to submit transactions	
 FromAddress = ""
-# Replace ApplicationTypeId and OrganizationId with real hexadecimal values
-ApplicationTypeId = "11aa22bb33cc44dd"
-OrganizationId = "aabbcc1234ddeeff"
+# Replace ApplicationTypeId and OrganizationId with real hexadecimal values, 64 characters
+# longs. As per EEA spec v1.1, they are bytes32 which effectively is 64 hex characters.
+ApplicationTypeId = "11aa22bb33cc44dd11aa22bb33cc44dd11aa22bb33cc44dd11aa22bb33cc44dd"
+OrganizationId = "aabbcc1234ddeeffaabbcc1234ddeeffaabbcc1234ddeeffaabbcc1234ddeeff"
 
 # URI used by worker to process work order receipts
 ReceiptInvocationUri = ""

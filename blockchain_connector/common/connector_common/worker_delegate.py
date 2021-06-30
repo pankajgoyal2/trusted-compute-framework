@@ -14,7 +14,6 @@
 
 import json
 import random
-import asyncio
 import logging
 from avalon_sdk.worker.worker_details import WorkerType, WorkerStatus
 import avalon_sdk.worker.worker_details as worker_details
@@ -42,6 +41,13 @@ class WorkerDelegate():
         self._jrpc_worker = jrpc_worker
         self._worker_instance = worker_instance
         self._config = config
+        # Map to store worker id to worker details mapping over the lifespan
+        # of the connector. Before updating a worker, this map is looked up.
+        self._worker_details_map = dict()
+        # Map to store worker id to worker status mapping over the lifespan
+        # of the connector. Before setting status of a worker,
+        # this map is looked up.
+        self._worker_status_map = dict()
 
     def lookup_workers_in_kv_storage(self):
         """
@@ -73,8 +79,8 @@ class WorkerDelegate():
         # Retrieve worker details
         jrpc_req_id = random.randint(0, 100000)
         worker_info = self._jrpc_worker.worker_retrieve(worker_id, jrpc_req_id)
-        logging.info("Worker retrieve response from kv storage: {}"
-                     .format(json.dumps(worker_info, indent=4)))
+        logging.debug("Worker retrieve response from kv storage: {}"
+                      .format(json.dumps(worker_info, indent=4)))
 
         if "error" in worker_info:
             logging.error("Unable to retrieve worker details from kv storage")
@@ -93,7 +99,6 @@ class WorkerDelegate():
                 wid)
             if worker_info is None:
                 continue
-            worker_id = wid
             worker_type = WorkerType(worker_info["workerType"])
             org_id = worker_info["organizationId"]
             app_type_id = worker_info["applicationTypeId"]
@@ -101,57 +106,81 @@ class WorkerDelegate():
 
             result = None
             if wid in wids_onchain:
-                result = self._worker_instance.worker_update(
-                    worker_id, details)
-                if result != ContractResponse.SUCCESS:
-                    logging.error("Error while updating worker {} \
-                            to blockchain".format(wid))
-                else:
-                    logging.info("Updated worker {} to blockchain".format(wid))
+                if wid not in self._worker_details_map or \
+                        self._worker_details_map[wid] != details:
+                    result = self._worker_instance.worker_update(
+                        wid, details)
+                    if result != ContractResponse.SUCCESS:
+                        logging.error("Error while updating worker {}"
+                                      " to blockchain".format(wid))
+                    else:
+                        logging.info("Updated worker {} to blockchain"
+                                     .format(wid))
+                        self._worker_details_map[wid] = details
+                        # Update status of worker as active explicitly if a
+                        # worker is updated, as worker status is not part of
+                        # worker update.
+                        if wid is not self._worker_status_map or \
+                                self._worker_status_map[wid] != \
+                                WorkerStatus.ACTIVE:
+                            result = self._worker_instance.worker_set_status(
+                                wid, WorkerStatus.ACTIVE)
+                            if result != ContractResponse.SUCCESS:
+                                logging.error("Error while setting worker "
+                                              "status {} in blockchain"
+                                              .format(wida))
+                            else:
+                                logging.info("Marked worker " + wid +
+                                             " as active "
+                                             "in blockchain")
+                                self._worker_status_map[wid] = \
+                                    WorkerStatus.ACTIVE
             else:
                 logging.info("Adding new worker {} to blockchain"
                              .format(wid))
                 result = self._worker_instance.worker_register(
-                    worker_id, worker_type, org_id, [app_type_id], details
+                    wid, worker_type, org_id, [app_type_id], details
                 )
                 if result != ContractResponse.SUCCESS:
-                    logging.error("Error while registering worker {} \
-                            to blockchain".format(wid))
+                    logging.error("Error while registering worker "
+                                  "{} to blockchain".format(wid))
                 else:
                     logging.info(
                         "Registered worker {} to blockchain".format(wid))
+                    self._worker_details_map[wid] = details
+                    self._worker_status_map[wid] = WorkerStatus.ACTIVE
 
         for wid in wids_onchain:
-            # Mark all stale workers on blockchain as decommissioned
+            # Mark all stale workers in blockchain as decommissioned
             if wid not in wids_in_kv:
-                worker_id = wid
-                worker = self._worker_instance\
-                    .worker_retrieve(wid, random.randint(0, 100000))
-                worker_status_onchain = worker["result"]["status"]
+                if wid not in self._worker_status_map:
+                    worker_status_onchain, _, _, _, _ = self._worker_instance\
+                        .worker_retrieve(wid)
+                else:
+                    worker_status_onchain = self._worker_status_map[wid]
                 # If worker is not already decommissioned, mark it
                 # decommissioned as it is no longer available in the kv storage
                 if worker_status_onchain != WorkerStatus.DECOMMISSIONED.value:
-                    status = self._worker_instance.worker_set_status(
-                        worker_id, WorkerStatus.DECOMMISSIONED)
+                    result = self._worker_instance.worker_set_status(
+                        wid, WorkerStatus.DECOMMISSIONED)
                     if result != ContractResponse.SUCCESS:
-                        logging.error("Error while setting worker status {} \
-                            in blockchain".format(wid))
+                        logging.error("Error while setting worker status for "
+                                      "{} in blockchain".format(wid))
                     else:
                         logging.info("Marked worker " + wid +
-                                     " as decommissioned on"
-                                     + " blockchain")
+                                     " as decommissioned in blockchain")
+                        self._worker_status_map[wid] = \
+                            WorkerStatus.DECOMMISSIONED
 
     def lookup_workers_onchain(self):
         """
         Lookup all workers on chain to sync up with kv storage
         """
-        jrpc_req_id = random.randint(0, 100000)
         # TODO: Remove hardcoding and pass wild characters instead
         count, _, worker_ids = self._worker_instance.worker_lookup(
             WorkerType.TEE_SGX,
             self._config["WorkerConfig"]["OrganizationId"],
             self._config["WorkerConfig"]["ApplicationTypeId"],
-            jrpc_req_id
         )
         logging.info("Worker lookup response from blockchain: "
                      "count {} worker ids {}\n".format(

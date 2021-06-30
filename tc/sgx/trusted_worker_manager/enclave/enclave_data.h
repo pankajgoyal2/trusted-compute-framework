@@ -56,6 +56,7 @@
 class EnclaveData {
 private:
     EnclaveData(void);
+    EnclaveData(const uint8_t* inSealedData);
     ~EnclaveData(void);
 
     static EnclaveData* instance;
@@ -63,6 +64,7 @@ private:
 protected:
     void SerializePrivateData(void);
     void SerializePublicData(void);
+    void DeserializeSealedData(const std::string& inSerializedEnclaveData);
 
     tcf::crypto::sig::PublicKey public_signing_key_;
     tcf::crypto::sig::PrivateKey private_signing_key_;
@@ -77,9 +79,12 @@ protected:
     std::string serialized_public_data_;
 
 public:
-    static EnclaveData* getInstance() {
+     static EnclaveData* getInstance(const uint8_t* inSealedData=nullptr) {
         if(!instance) {
-            instance = new EnclaveData;
+            if(inSealedData != nullptr)
+                instance = new EnclaveData(inSealedData);
+            else
+                instance = new EnclaveData();
         }
         return instance;
     }
@@ -135,7 +140,8 @@ public:
     void generate_encryption_key_signature() {
         std::string b64_pub_encr_key = public_encryption_key_.Serialize();
         ByteArray encr_key_sig_bytes = \
-            private_signing_key_.SignMessage(StrToByteArray(b64_pub_encr_key));
+            private_signing_key_.SignMessage(
+                tcf::crypto::ComputeMessageHash(StrToByteArray(b64_pub_encr_key)));
         encryption_key_signature_ = \
             ByteArrayToHexEncodedString(encr_key_sig_bytes);
     }

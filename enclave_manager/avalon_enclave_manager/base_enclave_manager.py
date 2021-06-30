@@ -15,10 +15,10 @@
 # limitations under the License.
 
 import argparse
-import hashlib
 import json
 import logging
 import sys
+import utility.hex_utils as hex_utils
 from abc import ABC, abstractmethod
 
 from database import connector
@@ -40,27 +40,27 @@ class EnclaveManager(ABC):
 
         self._config = config
         worker_id = config.get("WorkerConfig")["worker_id"]
-        # Calculate sha256 of worker id to get 32 bytes. The TC spec proxy
-        # model contracts expect byte32. Then take a hexdigest for hex str.
-        self._worker_id = hashlib.sha256(worker_id.encode("UTF-8")).hexdigest()
+        self._worker_id = hex_utils.get_worker_id_from_name(worker_id)
         self._kv_helper = self._connect_to_kv_store()
         self._worker_kv_delegate = WorkerKVDelegate(self._kv_helper)
         self._wo_kv_delegate = WorkOrderKVDelegate(
             self._kv_helper, self._worker_id)
-        signup_data, measurements = self._setup_enclave()
+        signup_data = self._setup_enclave()
+        if signup_data is None:
+            raise Exception("Failed to setup enclave")
         self.enclave_data = signup_data
-        self.sealed_data = signup_data.sealed_data
-        self.verifying_key = signup_data.verifying_key
-        self.encryption_key = signup_data.encryption_key
+        self.sealed_data = signup_data["sealed_data"]
+        self.verifying_key = signup_data["verifying_key"]
+        self.encryption_key = signup_data["encryption_key"]
+        self.encryption_key_signature = signup_data["encryption_key_signature"]
+        self.enclave_id = signup_data["enclave_id"]
+        self.proof_data = signup_data["proof_data"]
+        self.extended_measurements = signup_data["measurements"]
 
         # TODO: encryption_key_nonce is hardcoded to an empty str
         # Need to come up with a scheme to generate it for every unique
         # encryption key.
         self.encryption_key_nonce = ""
-        self.encryption_key_signature = signup_data.encryption_key_signature
-        self.enclave_id = signup_data.enclave_id
-        self.extended_measurements = measurements
-        self.proof_data = signup_data.proof_data
 
 # -------------------------------------------------------------------------
 
@@ -136,16 +136,17 @@ class EnclaveManager(ABC):
         Returns :
             signup_data - Relevant signup data to be used for requests to the
                           enclave
-            extended_measurements - A tuple of enclave basename & measurements
         """
         try:
             logger.info("Initialize enclave and create signup data")
             signup_data = self._create_signup_data()
-            extended_measurements = signup_data.get_extended_measurements()
+            if signup_data is None:
+                logger.error("Failed to create signup data")
+                return None
         except Exception as e:
             logger.exception("failed to initialize/signup enclave; %s", str(e))
             sys.exit(-1)
-        return signup_data, extended_measurements
+        return self._get_JSON_from_signup_object(signup_data)
 
     # -----------------------------------------------------------------
 
@@ -160,6 +161,32 @@ class EnclaveManager(ABC):
                           enclave
         """
         pass
+
+    # -----------------------------------------------------------------
+
+    def _get_JSON_from_signup_object(self, signup_data):
+        """
+        Create enclave specific signup data JSON from signup_data object.
+        This function is meant to be used by derived classes.
+
+        Parameters:
+            @param signup_data - An object carrying relevenat signup data
+        Returns:
+            @returns signup_data_json - Relevant signup data as a JSON to be
+                                        used for requests to the enclave
+        """
+        signup_data_json = {}
+        signup_data_json["enclave_data"] = signup_data
+        signup_data_json["sealed_data"] = signup_data.sealed_data
+        signup_data_json["verifying_key"] = signup_data.verifying_key
+        signup_data_json["encryption_key"] = signup_data.encryption_key
+        signup_data_json["encryption_key_signature"] = \
+            signup_data.encryption_key_signature
+        signup_data_json["enclave_id"] = signup_data.enclave_id
+        signup_data_json["proof_data"] = signup_data.proof_data
+        signup_data_json["measurements"] = signup_data.extended_measurements
+
+        return signup_data_json
 
     # -----------------------------------------------------------------
 
